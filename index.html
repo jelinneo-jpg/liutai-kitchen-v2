@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -124,11 +125,12 @@ button.action.husband {
 button.delete {
   border: 0;
   background: #eee;
-  padding: 9px 13px;
+  padding: 11px 13px;
   border-radius: 12px;
   cursor: pointer;
   color: #8a4d3b;
   width: 100%;
+  font-size: 14px;
 }
 
 button.recipe-button {
@@ -233,6 +235,33 @@ textarea {
   display: block;
   font-size: 28px;
   margin-bottom: 3px;
+}
+
+/* =========================
+   🔍 食物搜索
+========================= */
+
+#foodSearch {
+  width: 100%;
+  padding: 14px 16px;
+  margin: 5px 0 10px;
+  border: 1px solid #ead8cc;
+  border-radius: 15px;
+  font-size: 16px;
+  background: white;
+  outline: none;
+}
+
+#foodSearch:focus {
+  border-color: #e69765;
+  box-shadow: 0 0 0 3px rgba(230,151,101,.12);
+}
+
+.search-result-count {
+  text-align: center;
+  color: #987d70;
+  font-size: 13px;
+  margin: 0 0 15px;
 }
 
 /* =========================
@@ -416,6 +445,14 @@ textarea {
 <section id="recipes">
 
   <h2>🍽️ 刘太食物</h2>
+
+  <!-- 🔍 搜索食物 -->
+
+  <input
+    id="foodSearch"
+    type="search"
+    placeholder="🔍 搜索食物，例如：鸡、汤、意大利面"
+    oninput="searchFood()">
 
   <div id="recipeList">
 
@@ -771,53 +808,164 @@ function renderRecipes() {
 
     recipes.map(function(recipe) {
 
-      const icon =
-        getCategoryIcon(
-          recipe.category
-        );
-
-      return `
-
-        <div class="card">
-
-          <div class="food-icon">
-            ${icon}
-          </div>
-
-          <h2 class="food-name">
-            ${escapeHTML(recipe.name)}
-          </h2>
-
-          <span class="tag">
-            ${icon}
-            ${escapeHTML(recipe.category || "其他")}
-          </span>
-
-          <div class="action-row">
-
-            <button
-              class="action me"
-              onclick="orderRecipe('${recipe.id}', '我')">
-
-              ❤️ 我点
-
-            </button>
-
-            <button
-              class="action husband"
-              onclick="orderRecipe('${recipe.id}', '老公')">
-
-              ❤️ 老公点
-
-            </button>
-
-          </div>
-
-        </div>
-
-      `;
+      return recipeCardHTML(recipe);
 
     }).join("");
+
+}
+
+
+/* =====================================================
+   🍽️ 食物卡片
+===================================================== */
+
+function recipeCardHTML(recipe) {
+
+  const icon =
+    getCategoryIcon(
+      recipe.category
+    );
+
+  return `
+
+    <div class="card">
+
+      <div class="food-icon">
+        ${icon}
+      </div>
+
+      <h2 class="food-name">
+        ${escapeHTML(recipe.name)}
+      </h2>
+
+      <span class="tag">
+        ${icon}
+        ${escapeHTML(recipe.category || "其他")}
+      </span>
+
+      <div class="action-row">
+
+        <button
+          class="action me"
+          onclick="orderRecipe('${recipe.id}', '我')">
+
+          ❤️ 我点
+
+        </button>
+
+        <button
+          class="action husband"
+          onclick="orderRecipe('${recipe.id}', '老公')">
+
+          ❤️ 老公点
+
+        </button>
+
+      </div>
+
+      <br>
+
+      <button
+        class="delete"
+        onclick="deleteRecipe('${recipe.id}')">
+
+        🗑️ 删除食物
+
+      </button>
+
+    </div>
+
+  `;
+
+}
+
+
+/* =====================================================
+   🔍 搜索食物
+===================================================== */
+
+function searchFood() {
+
+  const input =
+    document.getElementById(
+      "foodSearch"
+    );
+
+  const keyword =
+    input.value
+      .trim()
+      .toLowerCase();
+
+  if (!keyword) {
+
+    renderRecipes();
+
+    return;
+
+  }
+
+  const filteredRecipes =
+    recipes.filter(function(recipe) {
+
+      const name =
+        String(recipe.name || "")
+          .toLowerCase();
+
+      const category =
+        String(recipe.category || "")
+          .toLowerCase();
+
+      return (
+        name.includes(keyword) ||
+        category.includes(keyword)
+      );
+
+    });
+
+  const box =
+    document.getElementById(
+      "recipeList"
+    );
+
+  if (!filteredRecipes.length) {
+
+    box.innerHTML = `
+
+      <div class="empty">
+
+        😢 找不到「${escapeHTML(keyword)}」
+
+        <br><br>
+
+        试试看其他食物名字或分类
+
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+  box.innerHTML = `
+
+    <div class="search-result-count">
+
+      找到 ${filteredRecipes.length} 道食物 ❤️
+
+    </div>
+
+    ${
+
+      filteredRecipes.map(function(recipe) {
+
+        return recipeCardHTML(recipe);
+
+      }).join("")
+
+    }
+
+  `;
 
 }
 
@@ -989,9 +1137,21 @@ async function deleteRecipe(id) {
 
   }
 
+  const recipe =
+    recipes.find(function(item) {
+
+      return String(item.id) ===
+        String(id);
+
+    });
+
   const confirmDelete =
     confirm(
-      "确定要删除这个食物吗？"
+      "确定要删除「" +
+      (recipe
+        ? recipe.name
+        : "这个食物") +
+      "」吗？\n\n删除后食物和保存的食谱资料都会删除。"
     );
 
   if (!confirmDelete) {
@@ -1015,7 +1175,10 @@ async function deleteRecipe(id) {
           "apikey": supabaseKey(),
 
           "Authorization":
-            "Bearer " + supabaseKey()
+            "Bearer " + supabaseKey(),
+
+          "Prefer":
+            "return=representation"
 
         }
 
@@ -1025,6 +1188,12 @@ async function deleteRecipe(id) {
 
       const errorText =
         await response.text();
+
+      console.error(
+        "Delete error:",
+        response.status,
+        errorText
+      );
 
       alert(
         "删除失败 😢\n" +
@@ -1038,6 +1207,8 @@ async function deleteRecipe(id) {
     alert(
       "食物已经删除 ❤️"
     );
+
+    currentRecipe = null;
 
     await loadRecipes();
 
@@ -1653,7 +1824,6 @@ function renderRecipeDetail() {
 
       </div>
 
-
       ${
         recipeLink
           ? `
@@ -1673,7 +1843,6 @@ function renderRecipeDetail() {
           `
           : ""
       }
-
 
       <h3 class="recipe-section-title">
         🥕 材料
@@ -1705,7 +1874,6 @@ function renderRecipeDetail() {
 
       </button>
 
-
       <h3 class="recipe-section-title">
         👩‍🍳 做法
       </h3>
@@ -1736,7 +1904,6 @@ function renderRecipeDetail() {
 
       </button>
 
-
       <h3 class="recipe-section-title">
         🔗 食谱 Link
       </h3>
@@ -1747,7 +1914,6 @@ function renderRecipeDetail() {
         type="url"
         value="${escapeHTML(recipeLink)}"
         placeholder="例如：https://www.youtube.com/...">
-
 
       <button
         class="save-recipe"
@@ -2275,6 +2441,7 @@ function showPage(page, button) {
 
   ];
 
+
   pages.forEach(function(pageName) {
 
     const section =
@@ -2400,3 +2567,5 @@ loadTodayOrders();
 
 </body>
 </html>
+```
+
