@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -7,6 +8,7 @@
 <title>刘太厨房</title>
 
 <style>
+
 * {
   box-sizing: border-box;
 }
@@ -110,6 +112,10 @@ button.action {
   font-weight: bold;
   cursor: pointer;
   font-size: 15px;
+}
+
+button.action.me {
+  background: #e69765;
 }
 
 button.action.husband {
@@ -231,6 +237,10 @@ textarea {
   margin-bottom: 3px;
 }
 
+/* =========================
+   🔍 食物搜索
+========================= */
+
 #foodSearch {
   width: 100%;
   padding: 14px 16px;
@@ -253,6 +263,10 @@ textarea {
   font-size: 13px;
   margin: 0 0 15px;
 }
+
+/* =========================
+   食谱材料 / 做法
+========================= */
 
 .recipe-section-title {
   font-size: 20px;
@@ -339,6 +353,14 @@ textarea {
   cursor: pointer;
 }
 
+.recipe-list-card:active {
+  transform: scale(.99);
+}
+
+/* =========================
+   🔗 Link
+========================= */
+
 .recipe-link-box {
   display: block;
   width: 100%;
@@ -352,7 +374,16 @@ textarea {
   margin-bottom: 15px;
 }
 
+.recipe-link-box:active {
+  transform: scale(.98);
+}
+
+.recipe-link-input {
+  margin-bottom: 15px;
+}
+
 @media (max-width: 420px) {
+
   .food-icon {
     font-size: 48px;
   }
@@ -364,40 +395,58 @@ textarea {
   .ingredient-row input {
     min-width: 0;
   }
+
 }
+
 </style>
 </head>
 
 <body>
 
 <header>
+
   <h1>🍳 刘太厨房</h1>
+
   <p>一家人的点菜 ❤️</p>
+
 </header>
 
 <nav>
-  <button class="active" onclick="showPage('recipes', this)">
+
+  <button
+    class="active"
+    onclick="showPage('recipes', this)">
     🍽️ 食物
   </button>
 
-  <button onclick="showPage('add', this)">
+  <button
+    onclick="showPage('add', this)">
     ➕ 添加食物
   </button>
 
-  <button onclick="showPage('today', this)">
+  <button
+    onclick="showPage('today', this)">
     📋 今日菜单
   </button>
 
-  <button onclick="showPage('cookbook', this)">
+  <button
+    onclick="showPage('cookbook', this)">
     📖 食谱
   </button>
+
 </nav>
 
 <main>
 
+<!-- =========================
+     🍽️ 食物
+========================= -->
+
 <section id="recipes">
 
   <h2>🍽️ 刘太食物</h2>
+
+  <!-- 🔍 搜索食物 -->
 
   <input
     id="foodSearch"
@@ -406,13 +455,19 @@ textarea {
     oninput="searchFood()">
 
   <div id="recipeList">
+
     <div class="loading">
       正在读取食物……
     </div>
+
   </div>
 
 </section>
 
+
+<!-- =========================
+     ➕ 添加食物
+========================= -->
 
 <section id="add" class="hidden">
 
@@ -434,7 +489,7 @@ textarea {
     </div>
 
     <button
-      class="save-recipe"
+      class="action"
       id="saveButton"
       onclick="addRecipe()">
 
@@ -447,31 +502,47 @@ textarea {
 </section>
 
 
+<!-- =========================
+     📋 今日菜单
+========================= -->
+
 <section id="today" class="hidden">
 
   <h2>📋 今日菜单</h2>
 
   <div id="todayList">
+
     <div class="loading">
       正在读取今日菜单……
     </div>
+
   </div>
 
 </section>
 
+
+<!-- =========================
+     📖 食谱列表
+========================= -->
 
 <section id="cookbook" class="hidden">
 
   <h2>📖 刘太食谱</h2>
 
   <div id="cookbookList">
+
     <div class="loading">
       正在读取食谱……
     </div>
+
   </div>
 
 </section>
 
+
+<!-- =========================
+     📖 单个食谱
+========================= -->
 
 <section id="recipeDetail" class="hidden">
 
@@ -487,13 +558,14 @@ textarea {
 
 </section>
 
+
 </main>
 
 
 <script>
 
 /* =====================================================
-   SUPABASE
+   ⭐ SUPABASE
 ===================================================== */
 
 const SUPABASE_URL =
@@ -504,7 +576,9 @@ const SUPABASE_KEY =
 
 
 let recipes = [];
+
 let selectedCategory = "";
+
 let currentRecipe = null;
 
 
@@ -513,6 +587,7 @@ let currentRecipe = null;
 ===================================================== */
 
 const categories = [
+
   { name: "鸡肉", icon: "🐔" },
   { name: "猪肉", icon: "🐷" },
   { name: "牛肉", icon: "🐮" },
@@ -528,27 +603,12 @@ const categories = [
   { name: "甜点", icon: "🍰" },
   { name: "早餐", icon: "🍳" },
   { name: "其他", icon: "🍽️" }
+
 ];
 
 
 /* =====================================================
-   安全文字
-===================================================== */
-
-function escapeHTML(text) {
-
-  return String(text ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-
-}
-
-
-/* =====================================================
-   Supabase
+   Supabase URL
 ===================================================== */
 
 function supabaseBaseURL() {
@@ -560,98 +620,19 @@ function supabaseBaseURL() {
 }
 
 
-function supabaseKey() {
-
-  return String(SUPABASE_KEY)
-    .trim();
-
-}
-
-
 /* =====================================================
-   Supabase 请求
+   Supabase Key
 ===================================================== */
 
-async function supabaseFetch(endpoint, options) {
+function supabaseKey() {
 
-  const controller =
-    new AbortController();
-
-  const timeout =
-    setTimeout(function() {
-
-      controller.abort();
-
-    }, 15000);
-
-
-  try {
-
-    const requestOptions =
-      options || {};
-
-    const headers =
-      Object.assign(
-        {
-          "apikey":
-            supabaseKey(),
-
-          "Authorization":
-            "Bearer " + supabaseKey()
-        },
-
-        requestOptions.headers || {}
-      );
-
-
-    return await fetch(
-
-      supabaseBaseURL() + endpoint,
-
-      Object.assign(
-        {},
-        requestOptions,
-        {
-          signal:
-            controller.signal,
-
-          headers:
-            headers
-        }
-      )
-
-    );
-
-  }
-
-  catch (error) {
-
-    if (
-      error &&
-      error.name === "AbortError"
-    ) {
-
-      throw new Error(
-        "连接数据库超时，请检查 Supabase。"
-      );
-
-    }
-
-    throw error;
-
-  }
-
-  finally {
-
-    clearTimeout(timeout);
-
-  }
+  return String(SUPABASE_KEY).trim();
 
 }
 
 
 /* =====================================================
-   分类图标
+   分类图案
 ===================================================== */
 
 function getCategoryIcon(category) {
@@ -662,7 +643,6 @@ function getCategoryIcon(category) {
       return item.name === category;
 
     });
-
 
   return found
     ? found.icon
@@ -682,13 +662,8 @@ function renderCategoryOptions() {
       "categoryGrid"
     );
 
-
-  if (!box) {
-    return;
-  }
-
-
   box.innerHTML =
+
     categories.map(function(category) {
 
       const selected =
@@ -696,19 +671,18 @@ function renderCategoryOptions() {
           ? "selected"
           : "";
 
-
       return `
 
         <button
           type="button"
           class="category-option ${selected}"
-          onclick="selectCategory('${escapeHTML(category.name)}')">
+          onclick="selectCategory('${category.name}')">
 
           <span class="category-icon">
             ${category.icon}
           </span>
 
-          ${escapeHTML(category.name)}
+          ${category.name}
 
         </button>
 
@@ -725,8 +699,7 @@ function renderCategoryOptions() {
 
 function selectCategory(category) {
 
-  selectedCategory =
-    category;
+  selectedCategory = category;
 
   renderCategoryOptions();
 
@@ -744,124 +717,51 @@ async function loadRecipes() {
       "recipeList"
     );
 
-
-  if (!box) {
-    return;
-  }
-
-
   box.innerHTML =
     '<div class="loading">正在读取食物……</div>';
 
-
   try {
 
+    const url =
+      supabaseBaseURL() +
+      "/family_recipes?select=*&order=created_at.desc";
+
     const response =
-      await supabaseFetch(
+      await fetch(url, {
 
-        "/family_recipes?select=*&order=created_at.desc",
+        method: "GET",
 
-        {
-          method: "GET"
+        headers: {
+
+          "apikey": supabaseKey(),
+
+          "Authorization":
+            "Bearer " + supabaseKey()
+
         }
 
-      );
-
-
-    const text =
-      await response.text();
-
-
-    console.log(
-      "Supabase food response:",
-      response.status,
-      text
-    );
-
+      });
 
     if (!response.ok) {
 
-      box.innerHTML = `
-
-        <div class="empty">
-
-          😢 食物读取失败
-
-          <br><br>
-
-          <small>
-            ${escapeHTML(text)}
-          </small>
-
-          <br><br>
-
-          <button
-            class="action"
-            onclick="loadRecipes()">
-
-            🔄 重新读取
-
-          </button>
-
-        </div>
-
-      `;
-
-      return;
-
-    }
-
-
-    let data = [];
-
-
-    try {
-
-      data =
-        text
-          ? JSON.parse(text)
-          : [];
-
-    }
-
-    catch (error) {
+      const errorText =
+        await response.text();
 
       console.error(
-        "JSON error:",
-        error
+        "Recipe error:",
+        response.status,
+        errorText
       );
 
-
-      box.innerHTML = `
-
-        <div class="empty">
-
-          😢 数据格式读取失败
-
-          <br><br>
-
-          <button
-            class="action"
-            onclick="loadRecipes()">
-
-            🔄 重新读取
-
-          </button>
-
-        </div>
-
-      `;
+      box.innerHTML =
+        '<div class="empty">食物读取失败 😢</div>';
 
       return;
 
     }
 
-
     recipes =
-      Array.isArray(data)
-        ? data
-        : [];
-
+      await response.json();
 
     renderRecipes();
 
@@ -872,39 +772,12 @@ async function loadRecipes() {
   catch (error) {
 
     console.error(
-      "loadRecipes error:",
+      "Recipe connection error:",
       error
     );
 
-
-    box.innerHTML = `
-
-      <div class="empty">
-
-        😢 无法读取食物
-
-        <br><br>
-
-        <small>
-          ${escapeHTML(
-            error.message ||
-            "数据库连接失败"
-          )}
-        </small>
-
-        <br><br>
-
-        <button
-          class="action"
-          onclick="loadRecipes()">
-
-          🔄 再试一次
-
-        </button>
-
-      </div>
-
-    `;
+    box.innerHTML =
+      '<div class="empty">食物读取失败 😢</div>';
 
   }
 
@@ -915,26 +788,14 @@ async function loadRecipes() {
    🍽️ 显示食物
 ===================================================== */
 
-function renderRecipes(list) {
+function renderRecipes() {
 
   const box =
     document.getElementById(
       "recipeList"
     );
 
-
-  if (!box) {
-    return;
-  }
-
-
-  const data =
-    Array.isArray(list)
-      ? list
-      : recipes;
-
-
-  if (!data.length) {
+  if (!recipes.length) {
 
     box.innerHTML =
       '<div class="empty">还没有食物 😊<br>点击「➕ 添加食物」开始吧！</div>';
@@ -943,13 +804,11 @@ function renderRecipes(list) {
 
   }
 
-
   box.innerHTML =
-    data.map(function(recipe) {
 
-      return recipeCardHTML(
-        recipe
-      );
+    recipes.map(function(recipe) {
+
+      return recipeCardHTML(recipe);
 
     }).join("");
 
@@ -957,7 +816,7 @@ function renderRecipes(list) {
 
 
 /* =====================================================
-   食物卡片
+   🍽️ 食物卡片
 ===================================================== */
 
 function recipeCardHTML(recipe) {
@@ -966,13 +825,6 @@ function recipeCardHTML(recipe) {
     getCategoryIcon(
       recipe.category
     );
-
-
-  const id =
-    escapeHTML(
-      String(recipe.id)
-    );
-
 
   return `
 
@@ -983,38 +835,27 @@ function recipeCardHTML(recipe) {
       </div>
 
       <h2 class="food-name">
-        ${escapeHTML(
-          recipe.name ||
-          "未命名食物"
-        )}
+        ${escapeHTML(recipe.name)}
       </h2>
 
       <span class="tag">
-
         ${icon}
-
-        ${escapeHTML(
-          recipe.category ||
-          "其他"
-        )}
-
+        ${escapeHTML(recipe.category || "其他")}
       </span>
-
 
       <div class="action-row">
 
         <button
-          class="action"
-          onclick="orderRecipe('${id}', '我')">
+          class="action me"
+          onclick="orderRecipe('${recipe.id}', '我')">
 
           ❤️ 我点
 
         </button>
 
-
         <button
           class="action husband"
-          onclick="orderRecipe('${id}', '老公')">
+          onclick="orderRecipe('${recipe.id}', '老公')">
 
           ❤️ 老公点
 
@@ -1022,13 +863,11 @@ function recipeCardHTML(recipe) {
 
       </div>
 
-
       <br>
-
 
       <button
         class="delete"
-        onclick="deleteRecipe('${id}')">
+        onclick="deleteRecipe('${recipe.id}')">
 
         🗑️ 删除食物
 
@@ -1042,7 +881,7 @@ function recipeCardHTML(recipe) {
 
 
 /* =====================================================
-   🔍 搜索
+   🔍 搜索食物
 ===================================================== */
 
 function searchFood() {
@@ -1052,17 +891,10 @@ function searchFood() {
       "foodSearch"
     );
 
-
-  if (!input) {
-    return;
-  }
-
-
   const keyword =
     input.value
       .trim()
       .toLowerCase();
-
 
   if (!keyword) {
 
@@ -1072,21 +904,16 @@ function searchFood() {
 
   }
 
-
-  const filtered =
+  const filteredRecipes =
     recipes.filter(function(recipe) {
 
       const name =
-        String(
-          recipe.name || ""
-        ).toLowerCase();
-
+        String(recipe.name || "")
+          .toLowerCase();
 
       const category =
-        String(
-          recipe.category || ""
-        ).toLowerCase();
-
+        String(recipe.category || "")
+          .toLowerCase();
 
       return (
         name.includes(keyword) ||
@@ -1095,14 +922,12 @@ function searchFood() {
 
     });
 
-
   const box =
     document.getElementById(
       "recipeList"
     );
 
-
-  if (!filtered.length) {
+  if (!filteredRecipes.length) {
 
     box.innerHTML = `
 
@@ -1122,22 +947,23 @@ function searchFood() {
 
   }
 
-
   box.innerHTML = `
 
     <div class="search-result-count">
 
-      找到 ${filtered.length} 道食物 ❤️
+      找到 ${filteredRecipes.length} 道食物 ❤️
 
     </div>
 
-    ${filtered.map(function(recipe) {
+    ${
 
-      return recipeCardHTML(
-        recipe
-      );
+      filteredRecipes.map(function(recipe) {
 
-    }).join("")}
+        return recipeCardHTML(recipe);
+
+      }).join("")
+
+    }
 
   `;
 
@@ -1150,148 +976,137 @@ function searchFood() {
 
 async function addRecipe() {
 
-  const nameInput =
-    document.getElementById(
-      "recipeName"
-    );
+  const name =
+    document
+      .getElementById("recipeName")
+      .value
+      .trim();
 
+  if (!name) {
+
+    alert("请先填写食物名字 ❤️");
+
+    return;
+
+  }
+
+  if (!selectedCategory) {
+
+    alert("请选择一个分类 ❤️");
+
+    return;
+
+  }
 
   const saveButton =
     document.getElementById(
       "saveButton"
     );
 
-
-  const name =
-    nameInput.value.trim();
-
-
-  if (!name) {
-
-    alert(
-      "请先填写食物名字 ❤️"
-    );
-
-    return;
-
-  }
-
-
-  if (!selectedCategory) {
-
-    alert(
-      "请选择一个分类 ❤️"
-    );
-
-    return;
-
-  }
-
-
-  saveButton.disabled =
-    true;
+  saveButton.disabled = true;
 
   saveButton.textContent =
     "正在保存……";
 
-
   try {
 
+    const url =
+      supabaseBaseURL() +
+      "/family_recipes";
+
     const response =
-      await supabaseFetch(
+      await fetch(url, {
 
-        "/family_recipes",
+        method: "POST",
 
-        {
-          method: "POST",
+        headers: {
 
-          headers: {
-            "Content-Type":
-              "application/json",
+          "apikey": supabaseKey(),
 
-            "Prefer":
-              "return=representation"
-          },
+          "Authorization":
+            "Bearer " + supabaseKey(),
 
-          body: JSON.stringify({
+          "Content-Type":
+            "application/json",
 
-            name:
-              name,
+          "Prefer":
+            "return=representation"
 
-            category:
-              selectedCategory,
+        },
 
-            ingredients:
-              JSON.stringify([]),
+        body: JSON.stringify({
 
-            instructions:
-              JSON.stringify([]),
+          name: name,
 
-            recipe_link:
-              null
+          category: selectedCategory,
 
-          })
+          ingredients: JSON.stringify([]),
 
-        }
+          instructions: JSON.stringify([]),
 
-      );
+          recipe_link: null
 
+        })
 
-    const text =
-      await response.text();
-
+      });
 
     if (!response.ok) {
 
+      const errorText =
+        await response.text();
+
+      console.error(
+        "Save error:",
+        response.status,
+        errorText
+      );
+
       alert(
-        "保存失败 😢\n\n" +
-        text
+        "保存失败 😢\n" +
+        errorText
       );
 
       return;
 
     }
 
-
     alert(
       "食物保存成功 ❤️"
     );
 
+    document
+      .getElementById("recipeName")
+      .value = "";
 
-    nameInput.value =
-      "";
-
-    selectedCategory =
-      "";
+    selectedCategory = "";
 
     renderCategoryOptions();
 
-
     await loadRecipes();
-
 
     showPage(
       "recipes",
-      document.querySelector(
-        "nav button"
-      )
+      document.querySelector("nav button")
     );
 
   }
 
   catch (error) {
 
+    console.error(
+      "Save connection error:",
+      error
+    );
+
     alert(
-      "无法连接数据库 😢\n\n" +
-      error.message
+      "无法连接数据库 😢"
     );
 
   }
 
   finally {
 
-    saveButton.disabled =
-      false;
+    saveButton.disabled = false;
 
     saveButton.textContent =
       "保存食物 ❤️";
@@ -1308,26 +1123,19 @@ async function addRecipe() {
 async function deleteRecipe(id) {
 
   const password =
-    prompt(
-      "请输入删除密码："
-    );
-
+    prompt("请输入删除密码：");
 
   if (password === null) {
     return;
   }
 
-
   if (password !== "1") {
 
-    alert(
-      "密码错误 ❌"
-    );
+    alert("密码错误 ❌");
 
     return;
 
   }
-
 
   const recipe =
     recipes.find(function(item) {
@@ -1337,81 +1145,70 @@ async function deleteRecipe(id) {
 
     });
 
-
-  if (!recipe) {
-
-    alert(
-      "找不到这个食物 😢"
-    );
-
-    return;
-
-  }
-
-
   const confirmDelete =
     confirm(
-
       "确定要删除「" +
-      recipe.name +
-      "」吗？\n\n" +
-      "删除后食物和保存的食谱资料都会删除。"
-
+      (recipe
+        ? recipe.name
+        : "这个食物") +
+      "」吗？\n\n删除后食物和保存的食谱资料都会删除。"
     );
-
 
   if (!confirmDelete) {
     return;
   }
 
-
   try {
 
+    const url =
+      supabaseBaseURL() +
+      "/family_recipes?id=eq." +
+      encodeURIComponent(id);
+
     const response =
-      await supabaseFetch(
+      await fetch(url, {
 
-        "/family_recipes?id=eq." +
-        encodeURIComponent(id),
+        method: "DELETE",
 
-        {
-          method: "DELETE",
+        headers: {
 
-          headers: {
-            "Prefer":
-              "return=representation"
-          }
+          "apikey": supabaseKey(),
+
+          "Authorization":
+            "Bearer " + supabaseKey(),
+
+          "Prefer":
+            "return=representation"
 
         }
 
-      );
-
-
-    const text =
-      await response.text();
-
+      });
 
     if (!response.ok) {
 
+      const errorText =
+        await response.text();
+
+      console.error(
+        "Delete error:",
+        response.status,
+        errorText
+      );
+
       alert(
-        "删除失败 😢\n\n" +
-        text
+        "删除失败 😢\n" +
+        errorText
       );
 
       return;
 
     }
 
-
     alert(
-      "「" +
-      recipe.name +
-      "」已经删除 ❤️"
+      "食物已经删除 ❤️"
     );
 
-
-    currentRecipe =
-      null;
-
+    currentRecipe = null;
 
     await loadRecipes();
 
@@ -1419,10 +1216,12 @@ async function deleteRecipe(id) {
 
   catch (error) {
 
-    alert(
-      "删除失败 😢\n\n" +
-      error.message
+    console.error(
+      "Delete error:",
+      error
     );
+
+    alert("删除失败 😢");
 
   }
 
@@ -1433,10 +1232,7 @@ async function deleteRecipe(id) {
    ❤️ 点菜
 ===================================================== */
 
-async function orderRecipe(
-  id,
-  person
-) {
+async function orderRecipe(id, person) {
 
   const recipe =
     recipes.find(function(item) {
@@ -1446,82 +1242,89 @@ async function orderRecipe(
 
     });
 
-
   if (!recipe) {
     return;
   }
-
 
   const confirmOrder =
     confirm(
 
       "确定要点：\n\n" +
+
       recipe.name +
+
       "\n\n点菜人：" +
+
       person
 
     );
-
 
   if (!confirmOrder) {
     return;
   }
 
-
   try {
 
+    const url =
+      supabaseBaseURL() +
+      "/family_orders";
+
     const response =
-      await supabaseFetch(
+      await fetch(url, {
 
-        "/family_orders",
+        method: "POST",
 
-        {
-          method: "POST",
+        headers: {
 
-          headers: {
-            "Content-Type":
-              "application/json",
+          "apikey": supabaseKey(),
 
-            "Prefer":
-              "return=representation"
-          },
+          "Authorization":
+            "Bearer " + supabaseKey(),
 
-          body: JSON.stringify({
+          "Content-Type":
+            "application/json",
 
-            recipe_name:
-              recipe.name,
+          "Prefer":
+            "return=representation"
 
-            ordered_by:
-              person
+        },
 
-          })
+        body: JSON.stringify({
 
-        }
+          recipe_name:
+            recipe.name,
 
-      );
+          ordered_by:
+            person
 
+        })
 
-    const text =
-      await response.text();
-
+      });
 
     if (!response.ok) {
 
+      const errorText =
+        await response.text();
+
+      console.error(
+        "Order error:",
+        response.status,
+        errorText
+      );
+
       alert(
-        "加入今日菜单失败 😢\n\n" +
-        text
+        "加入今日菜单失败 😢\n" +
+        errorText
       );
 
       return;
 
     }
 
-
     alert(
       recipe.name +
       "\n已经加入今日菜单 ❤️"
     );
-
 
     await loadTodayOrders();
 
@@ -1529,9 +1332,13 @@ async function orderRecipe(
 
   catch (error) {
 
+    console.error(
+      "Order connection error:",
+      error
+    );
+
     alert(
-      "无法连接今日菜单 😢\n\n" +
-      error.message
+      "无法连接今日菜单 😢"
     );
 
   }
@@ -1550,159 +1357,99 @@ async function loadTodayOrders() {
       "todayList"
     );
 
-
-  if (!box) {
-    return;
-  }
-
-
   box.innerHTML =
     '<div class="loading">正在读取今日菜单……</div>';
 
-
   try {
 
+    const url =
+      supabaseBaseURL() +
+      "/family_orders?select=*&order=created_at.desc";
+
     const response =
-      await supabaseFetch(
+      await fetch(url, {
 
-        "/family_orders?select=*&order=created_at.desc",
+        method: "GET",
 
-        {
-          method: "GET"
+        headers: {
+
+          "apikey": supabaseKey(),
+
+          "Authorization":
+            "Bearer " + supabaseKey()
+
         }
 
-      );
-
-
-    const text =
-      await response.text();
-
+      });
 
     if (!response.ok) {
 
-      box.innerHTML = `
+      const errorText =
+        await response.text();
 
-        <div class="empty">
+      console.error(
+        "Today orders error:",
+        response.status,
+        errorText
+      );
 
-          😢 今日菜单读取失败
-
-          <br><br>
-
-          <small>
-            ${escapeHTML(text)}
-          </small>
-
-          <br><br>
-
-          <button
-            class="action"
-            onclick="loadTodayOrders()">
-
-            🔄 重新读取
-
-          </button>
-
-        </div>
-
-      `;
+      box.innerHTML =
+        '<div class="empty">今日菜单读取失败 😢</div>';
 
       return;
 
     }
 
-
-    let allOrders = [];
-
-
-    try {
-
-      allOrders =
-        text
-          ? JSON.parse(text)
-          : [];
-
-    }
-
-    catch (error) {
-
-      allOrders = [];
-
-    }
-
+    const allOrders =
+      await response.json();
 
     const today =
       new Date();
 
-
     const orders =
-      allOrders.filter(
-        function(order) {
+      allOrders.filter(function(order) {
 
-          if (!order.created_at) {
-            return false;
-          }
+        if (!order.created_at) {
+          return false;
+        }
 
-
-          const date =
-            new Date(
-              order.created_at
-            );
-
-
-          return (
-
-            date.getFullYear() ===
-              today.getFullYear()
-
-            &&
-
-            date.getMonth() ===
-              today.getMonth()
-
-            &&
-
-            date.getDate() ===
-              today.getDate()
-
+        const orderDate =
+          new Date(
+            order.created_at
           );
 
-        }
-      );
+        return (
 
+          orderDate.getFullYear() ===
+          today.getFullYear()
 
-    renderToday(
-      orders
-    );
+          &&
+
+          orderDate.getMonth() ===
+          today.getMonth()
+
+          &&
+
+          orderDate.getDate() ===
+          today.getDate()
+
+        );
+
+      });
+
+    renderToday(orders);
 
   }
 
   catch (error) {
 
-    box.innerHTML = `
+    console.error(
+      "Today orders error:",
+      error
+    );
 
-      <div class="empty">
-
-        😢 今日菜单读取失败
-
-        <br><br>
-
-        ${escapeHTML(
-          error.message || ""
-        )}
-
-        <br><br>
-
-        <button
-          class="action"
-          onclick="loadTodayOrders()">
-
-          🔄 再试一次
-
-        </button>
-
-      </div>
-
-    `;
+    box.innerHTML =
+      '<div class="empty">今日菜单读取失败 😢</div>';
 
   }
 
@@ -1710,18 +1457,15 @@ async function loadTodayOrders() {
 
 
 /* =====================================================
-   显示今日菜单
+   📋 显示今日菜单
 ===================================================== */
 
-function renderToday(
-  orders
-) {
+function renderToday(orders) {
 
   const box =
     document.getElementById(
       "todayList"
     );
-
 
   if (!orders.length) {
 
@@ -1732,45 +1476,29 @@ function renderToday(
 
   }
 
-
   box.innerHTML =
+
     orders.map(function(item) {
 
-      const recipe =
-        recipes.find(function(r) {
-
-          return r.name ===
-            item.recipe_name;
-
-        });
-
-
       const icon =
-        recipe
-          ? getCategoryIcon(
-              recipe.category
-            )
-          : "🍽️";
-
+        getIconFromFoodName(
+          item.recipe_name
+        );
 
       const time =
         item.created_at
 
-          ? new Date(
-              item.created_at
-            ).toLocaleTimeString(
-              "zh-CN",
-              {
-                hour:
-                  "2-digit",
+        ? new Date(
+            item.created_at
+          ).toLocaleTimeString(
+            "zh-CN",
+            {
+              hour: "2-digit",
+              minute: "2-digit"
+            }
+          )
 
-                minute:
-                  "2-digit"
-              }
-            )
-
-          : "";
-
+        : "";
 
       return `
 
@@ -1792,8 +1520,7 @@ function renderToday(
 
             ❤️
             ${escapeHTML(
-              item.ordered_by ||
-              "家人"
+              item.ordered_by || "家人"
             )}
 
           </div>
@@ -1809,7 +1536,7 @@ function renderToday(
 
           <button
             class="delete"
-            onclick="removeOrder('${escapeHTML(String(item.id))}')">
+            onclick="removeOrder('${item.id}')">
 
             取消
 
@@ -1825,66 +1552,6 @@ function renderToday(
 
 
 /* =====================================================
-   取消今日菜单
-===================================================== */
-
-async function removeOrder(id) {
-
-  if (!confirm(
-    "确定取消这道菜吗？"
-  )) {
-    return;
-  }
-
-
-  try {
-
-    const response =
-      await supabaseFetch(
-
-        "/family_orders?id=eq." +
-        encodeURIComponent(id),
-
-        {
-          method: "DELETE"
-        }
-
-      );
-
-
-    const text =
-      await response.text();
-
-
-    if (!response.ok) {
-
-      alert(
-        "取消失败 😢\n\n" +
-        text
-      );
-
-      return;
-
-    }
-
-
-    await loadTodayOrders();
-
-  }
-
-  catch (error) {
-
-    alert(
-      "无法连接数据库 😢\n\n" +
-      error.message
-    );
-
-  }
-
-}
-
-
-/* =====================================================
    📖 食谱列表
 ===================================================== */
 
@@ -1895,12 +1562,6 @@ function renderCookbook() {
       "cookbookList"
     );
 
-
-  if (!box) {
-    return;
-  }
-
-
   if (!recipes.length) {
 
     box.innerHTML =
@@ -1910,8 +1571,8 @@ function renderCookbook() {
 
   }
 
-
   box.innerHTML =
+
     recipes.map(function(recipe) {
 
       const icon =
@@ -1919,23 +1580,14 @@ function renderCookbook() {
           recipe.category
         );
 
-
-      const id =
-        escapeHTML(
-          String(recipe.id)
-        );
-
-
       return `
 
         <div
           class="card recipe-list-card"
-          onclick="openRecipe('${id}')">
+          onclick="openRecipe('${recipe.id}')">
 
           <div class="food-icon">
-
             ${icon}
-
           </div>
 
           <h2 class="food-name">
@@ -1949,18 +1601,15 @@ function renderCookbook() {
           <span class="tag">
 
             ${icon}
-
             ${escapeHTML(
-              recipe.category ||
-              "其他"
+              recipe.category || "其他"
             )}
 
           </span>
 
-
           <button
             class="recipe-button"
-            onclick="event.stopPropagation(); openRecipe('${id}')">
+            onclick="event.stopPropagation(); openRecipe('${recipe.id}')">
 
             📖 查看食谱
 
@@ -1989,33 +1638,19 @@ function openRecipe(id) {
 
     });
 
-
   if (!recipe) {
     return;
   }
 
-
-  currentRecipe =
-    recipe;
-
+  currentRecipe = recipe;
 
   document
-    .getElementById(
-      "cookbook"
-    )
-    .classList.add(
-      "hidden"
-    );
-
+    .getElementById("cookbook")
+    .classList.add("hidden");
 
   document
-    .getElementById(
-      "recipeDetail"
-    )
-    .classList.remove(
-      "hidden"
-    );
-
+    .getElementById("recipeDetail")
+    .classList.remove("hidden");
 
   renderRecipeDetail();
 
@@ -2023,12 +1658,10 @@ function openRecipe(id) {
 
 
 /* =====================================================
-   材料
+   📖 读取材料
 ===================================================== */
 
-function parseIngredients(
-  recipe
-) {
+function parseIngredients(recipe) {
 
   try {
 
@@ -2036,33 +1669,27 @@ function parseIngredients(
       return [];
     }
 
-
-    if (
-      Array.isArray(
-        recipe.ingredients
-      )
-    ) {
-
+    if (Array.isArray(recipe.ingredients)) {
       return recipe.ingredients;
-
     }
 
-
     const data =
-      JSON.parse(
-        recipe.ingredients
-      );
+      JSON.parse(recipe.ingredients);
 
+    if (Array.isArray(data)) {
+      return data;
+    }
 
-    return Array.isArray(data)
-      ? data
-      : [];
+    return [];
 
   }
 
   catch (error) {
 
-    console.error(error);
+    console.error(
+      "Ingredients parse error:",
+      error
+    );
 
     return [];
 
@@ -2072,12 +1699,10 @@ function parseIngredients(
 
 
 /* =====================================================
-   做法
+   👩‍🍳 读取做法
 ===================================================== */
 
-function parseInstructions(
-  recipe
-) {
+function parseInstructions(recipe) {
 
   try {
 
@@ -2085,33 +1710,27 @@ function parseInstructions(
       return [];
     }
 
-
-    if (
-      Array.isArray(
-        recipe.instructions
-      )
-    ) {
-
+    if (Array.isArray(recipe.instructions)) {
       return recipe.instructions;
-
     }
 
-
     const data =
-      JSON.parse(
-        recipe.instructions
-      );
+      JSON.parse(recipe.instructions);
 
+    if (Array.isArray(data)) {
+      return data;
+    }
 
-    return Array.isArray(data)
-      ? data
-      : [];
+    return [];
 
   }
 
   catch (error) {
 
-    console.error(error);
+    console.error(
+      "Instructions parse error:",
+      error
+    );
 
     return [];
 
@@ -2121,39 +1740,26 @@ function parseInstructions(
 
 
 /* =====================================================
-   Link
+   🔗 清理 Link
 ===================================================== */
 
-function normalizeRecipeLink(
-  link
-) {
+function normalizeRecipeLink(link) {
 
   const value =
-    String(link || "")
-      .trim();
-
+    String(link || "").trim();
 
   if (!value) {
     return "";
   }
 
-
   if (
-    value.startsWith(
-      "https://"
-    )
-
-    ||
-
-    value.startsWith(
-      "http://"
-    )
+    value.startsWith("https://") ||
+    value.startsWith("http://")
   ) {
 
     return value;
 
   }
-
 
   return "https://" + value;
 
@@ -2170,46 +1776,36 @@ function renderRecipeDetail() {
     return;
   }
 
-
   const ingredients =
     parseIngredients(
       currentRecipe
     );
-
 
   const instructions =
     parseInstructions(
       currentRecipe
     );
 
-
   const icon =
     getCategoryIcon(
       currentRecipe.category
     );
 
-
   const recipeLink =
-    currentRecipe.recipe_link ||
-    "";
-
+    currentRecipe.recipe_link || "";
 
   const box =
     document.getElementById(
       "recipeDetailContent"
     );
 
-
   box.innerHTML = `
 
     <div class="card">
 
       <div class="food-icon">
-
         ${icon}
-
       </div>
-
 
       <div class="recipe-title">
 
@@ -2219,30 +1815,23 @@ function renderRecipeDetail() {
 
       </div>
 
-
       <div class="recipe-category">
 
         ${icon}
-
         ${escapeHTML(
-          currentRecipe.category ||
-          "其他"
+          currentRecipe.category || "其他"
         )}
 
       </div>
 
-
       ${
         recipeLink
-
           ? `
 
             <a
               class="recipe-link-box"
               href="${escapeHTML(
-                normalizeRecipeLink(
-                  recipeLink
-                )
+                normalizeRecipeLink(recipeLink)
               )}"
               target="_blank"
               rel="noopener noreferrer">
@@ -2252,36 +1841,30 @@ function renderRecipeDetail() {
             </a>
 
           `
-
           : ""
-
       }
 
-
       <h3 class="recipe-section-title">
-
         🥕 材料
-
       </h3>
-
 
       <div id="ingredientEditor">
 
         ${
-          ingredients.map(
-            function(item, index) {
+          ingredients.length
+            ? ingredients.map(function(item, index) {
 
-              return ingredientEditorHTML(
-                item,
-                index
-              );
+                return ingredientEditorHTML(
+                  item,
+                  index
+                );
 
-            }
-          ).join("")
+              }).join("")
+
+            : ""
         }
 
       </div>
-
 
       <button
         class="add-row-button"
@@ -2291,31 +1874,27 @@ function renderRecipeDetail() {
 
       </button>
 
-
       <h3 class="recipe-section-title">
-
         👩‍🍳 做法
-
       </h3>
-
 
       <div id="stepEditor">
 
         ${
-          instructions.map(
-            function(item, index) {
+          instructions.length
+            ? instructions.map(function(item, index) {
 
-              return stepEditorHTML(
-                item,
-                index
-              );
+                return stepEditorHTML(
+                  item,
+                  index
+                );
 
-            }
-          ).join("")
+              }).join("")
+
+            : ""
         }
 
       </div>
-
 
       <button
         class="add-row-button"
@@ -2325,13 +1904,9 @@ function renderRecipeDetail() {
 
       </button>
 
-
       <h3 class="recipe-section-title">
-
         🔗 食谱 Link
-
       </h3>
-
 
       <input
         id="recipeLink"
@@ -2339,7 +1914,6 @@ function renderRecipeDetail() {
         type="url"
         value="${escapeHTML(recipeLink)}"
         placeholder="例如：https://www.youtube.com/...">
-
 
       <button
         class="save-recipe"
@@ -2360,28 +1934,17 @@ function renderRecipeDetail() {
    材料格子
 ===================================================== */
 
-function ingredientEditorHTML(
-  item,
-  index
-) {
+function ingredientEditorHTML(item, index) {
 
   const name =
     typeof item === "string"
       ? item
-      : (
-          item &&
-          item.name
-        ) || "";
-
+      : (item.name || "");
 
   const amount =
     typeof item === "string"
       ? ""
-      : (
-          item &&
-          item.amount
-        ) || "";
-
+      : (item.amount || "");
 
   return `
 
@@ -2392,12 +1955,10 @@ function ingredientEditorHTML(
         placeholder="材料，例如：鸡腿肉"
         value="${escapeHTML(name)}">
 
-
       <input
         class="ingredient-amount"
         placeholder="分量，例如：2块"
         value="${escapeHTML(amount)}">
-
 
       <button
         type="button"
@@ -2416,7 +1977,7 @@ function ingredientEditorHTML(
 
 
 /* =====================================================
-   ➕ 添加材料
+   ➕ 增加材料
 ===================================================== */
 
 function addIngredientRow() {
@@ -2426,17 +1987,8 @@ function addIngredientRow() {
       "ingredientEditor"
     );
 
-
-  if (!box) {
-    return;
-  }
-
-
   const div =
-    document.createElement(
-      "div"
-    );
-
+    document.createElement("div");
 
   div.innerHTML =
     ingredientEditorHTML(
@@ -2446,7 +1998,6 @@ function addIngredientRow() {
       },
       box.children.length
     );
-
 
   box.appendChild(
     div.firstElementChild
@@ -2459,26 +2010,19 @@ function addIngredientRow() {
    做法格子
 ===================================================== */
 
-function stepEditorHTML(
-  item,
-  index
-) {
+function stepEditorHTML(item, index) {
 
   return `
 
     <div class="step-row">
 
       <div class="step-number">
-
         ${index + 1}
-
       </div>
-
 
       <textarea
         class="step-text"
         placeholder="请输入这个步骤……">${escapeHTML(item || "")}</textarea>
-
 
       <button
         type="button"
@@ -2497,7 +2041,7 @@ function stepEditorHTML(
 
 
 /* =====================================================
-   ➕ 添加步骤
+   ➕ 增加做法
 ===================================================== */
 
 function addStepRow() {
@@ -2507,21 +2051,11 @@ function addStepRow() {
       "stepEditor"
     );
 
-
-  if (!box) {
-    return;
-  }
-
-
   const index =
     box.children.length;
 
-
   const div =
-    document.createElement(
-      "div"
-    );
-
+    document.createElement("div");
 
   div.innerHTML =
     stepEditorHTML(
@@ -2529,11 +2063,9 @@ function addStepRow() {
       index
     );
 
-
   box.appendChild(
     div.firstElementChild
   );
-
 
   refreshStepNumbers();
 
@@ -2541,20 +2073,10 @@ function addStepRow() {
 
 
 /* =====================================================
-   删除步骤
+   删除做法
 ===================================================== */
 
-function removeStep(
-  button
-) {
-
-  if (
-    !button ||
-    !button.parentElement
-  ) {
-    return;
-  }
-
+function removeStep(button) {
 
   button.parentElement.remove();
 
@@ -2564,7 +2086,7 @@ function removeStep(
 
 
 /* =====================================================
-   自动编号
+   自动更新步骤编号
 ===================================================== */
 
 function refreshStepNumbers() {
@@ -2574,25 +2096,17 @@ function refreshStepNumbers() {
       "#stepEditor .step-row"
     );
 
+  rows.forEach(function(row, index) {
 
-  rows.forEach(
-    function(row, index) {
+    const number =
+      row.querySelector(
+        ".step-number"
+      );
 
-      const number =
-        row.querySelector(
-          ".step-number"
-        );
+    number.textContent =
+      index + 1;
 
-
-      if (number) {
-
-        number.textContent =
-          index + 1;
-
-      }
-
-    }
-  );
+  });
 
 }
 
@@ -2607,98 +2121,67 @@ async function saveRecipeDetail() {
     return;
   }
 
+  const ingredientRows =
+    document.querySelectorAll(
+      "#ingredientEditor .ingredient-row"
+    );
 
   const ingredients = [];
 
+  ingredientRows.forEach(function(row) {
 
-  document
-    .querySelectorAll(
-      "#ingredientEditor .ingredient-row"
-    )
-    .forEach(
-      function(row) {
+    const name =
+      row.querySelector(
+        ".ingredient-name"
+      ).value.trim();
 
-        const nameInput =
-          row.querySelector(
-            ".ingredient-name"
-          );
+    const amount =
+      row.querySelector(
+        ".ingredient-amount"
+      ).value.trim();
 
+    if (name || amount) {
 
-        const amountInput =
-          row.querySelector(
-            ".ingredient-amount"
-          );
+      ingredients.push({
 
+        name: name,
 
-        const name =
-          nameInput
-            ? nameInput.value.trim()
-            : "";
+        amount: amount
 
+      });
 
-        const amount =
-          amountInput
-            ? amountInput.value.trim()
-            : "";
+    }
+
+  });
 
 
-        if (name || amount) {
-
-          ingredients.push({
-
-            name:
-              name,
-
-            amount:
-              amount
-
-          });
-
-        }
-
-      }
+  const stepRows =
+    document.querySelectorAll(
+      "#stepEditor .step-row"
     );
-
 
   const instructions = [];
 
+  stepRows.forEach(function(row) {
 
-  document
-    .querySelectorAll(
-      "#stepEditor .step-row"
-    )
-    .forEach(
-      function(row) {
+    const text =
+      row.querySelector(
+        ".step-text"
+      ).value.trim();
 
-        const textarea =
-          row.querySelector(
-            ".step-text"
-          );
+    if (text) {
 
+      instructions.push(text);
 
-        const text =
-          textarea
-            ? textarea.value.trim()
-            : "";
+    }
 
-
-        if (text) {
-
-          instructions.push(
-            text
-          );
-
-        }
-
-      }
-    );
+  });
 
 
   const recipeLinkInput =
     document.getElementById(
       "recipeLink"
     );
-
 
   const recipeLink =
     recipeLinkInput
@@ -2708,59 +2191,67 @@ async function saveRecipeDetail() {
 
   try {
 
-    const response =
-      await supabaseFetch(
-
-        "/family_recipes?id=eq." +
-        encodeURIComponent(
-          currentRecipe.id
-        ),
-
-        {
-          method: "PATCH",
-
-          headers: {
-
-            "Content-Type":
-              "application/json",
-
-            "Prefer":
-              "return=representation"
-
-          },
-
-          body: JSON.stringify({
-
-            ingredients:
-              JSON.stringify(
-                ingredients
-              ),
-
-            instructions:
-              JSON.stringify(
-                instructions
-              ),
-
-            recipe_link:
-              recipeLink ||
-              null
-
-          })
-
-        }
-
+    const url =
+      supabaseBaseURL() +
+      "/family_recipes?id=eq." +
+      encodeURIComponent(
+        currentRecipe.id
       );
 
+    const response =
+      await fetch(url, {
 
-    const text =
-      await response.text();
+        method: "PATCH",
+
+        headers: {
+
+          "apikey": supabaseKey(),
+
+          "Authorization":
+            "Bearer " + supabaseKey(),
+
+          "Content-Type":
+            "application/json",
+
+          "Prefer":
+            "return=representation"
+
+        },
+
+        body: JSON.stringify({
+
+          ingredients:
+            JSON.stringify(
+              ingredients
+            ),
+
+          instructions:
+            JSON.stringify(
+              instructions
+            ),
+
+          recipe_link:
+            recipeLink || null
+
+        })
+
+      });
 
 
     if (!response.ok) {
 
+      const errorText =
+        await response.text();
+
+      console.error(
+        "Save recipe detail error:",
+        response.status,
+        errorText
+      );
+
       alert(
-        "食谱保存失败 😢\n\n" +
-        text
+        "食谱保存失败 😢\n" +
+        errorText
       );
 
       return;
@@ -2773,31 +2264,29 @@ async function saveRecipeDetail() {
     );
 
 
-    const oldId =
-      currentRecipe.id;
+    const updated =
+      await response.json();
+
+    if (
+      Array.isArray(updated) &&
+      updated.length
+    ) {
+
+      currentRecipe =
+        updated[0];
+
+    }
 
 
     await loadRecipes();
 
+    currentRecipe =
+      recipes.find(function(item) {
 
-    const updatedRecipe =
-      recipes.find(
-        function(item) {
+        return String(item.id) ===
+          String(currentRecipe.id);
 
-          return String(item.id) ===
-            String(oldId);
-
-        }
-      );
-
-
-    if (updatedRecipe) {
-
-      currentRecipe =
-        updatedRecipe;
-
-    }
-
+      }) || currentRecipe;
 
     renderRecipeDetail();
 
@@ -2805,9 +2294,13 @@ async function saveRecipeDetail() {
 
   catch (error) {
 
+    console.error(
+      "Save recipe detail connection error:",
+      error
+    );
+
     alert(
-      "无法连接数据库 😢\n\n" +
-      error.message
+      "无法连接数据库 😢"
     );
 
   }
@@ -2822,25 +2315,112 @@ async function saveRecipeDetail() {
 function backToCookbook() {
 
   document
-    .getElementById(
-      "recipeDetail"
-    )
-    .classList.add(
-      "hidden"
-    );
-
+    .getElementById("recipeDetail")
+    .classList.add("hidden");
 
   document
-    .getElementById(
-      "cookbook"
-    )
-    .classList.remove(
-      "hidden"
+    .getElementById("cookbook")
+    .classList.remove("hidden");
+
+  currentRecipe = null;
+
+}
+
+
+/* =====================================================
+   图案
+===================================================== */
+
+function getIconFromFoodName(name) {
+
+  const recipe =
+    recipes.find(function(item) {
+
+      return item.name === name;
+
+    });
+
+  if (recipe) {
+
+    return getCategoryIcon(
+      recipe.category
     );
 
+  }
 
-  currentRecipe =
-    null;
+  return "🍽️";
+
+}
+
+
+/* =====================================================
+   取消今日菜单
+===================================================== */
+
+async function removeOrder(id) {
+
+  const confirmRemove =
+    confirm(
+      "确定取消这道菜吗？"
+    );
+
+  if (!confirmRemove) {
+    return;
+  }
+
+  try {
+
+    const url =
+      supabaseBaseURL() +
+      "/family_orders?id=eq." +
+      encodeURIComponent(id);
+
+    const response =
+      await fetch(url, {
+
+        method: "DELETE",
+
+        headers: {
+
+          "apikey": supabaseKey(),
+
+          "Authorization":
+            "Bearer " + supabaseKey()
+
+        }
+
+      });
+
+    if (!response.ok) {
+
+      const errorText =
+        await response.text();
+
+      alert(
+        "取消失败 😢\n" +
+        errorText
+      );
+
+      return;
+
+    }
+
+    await loadTodayOrders();
+
+  }
+
+  catch (error) {
+
+    console.error(
+      "Remove order error:",
+      error
+    );
+
+    alert(
+      "无法连接数据库 😢"
+    );
+
+  }
 
 }
 
@@ -2849,10 +2429,7 @@ function backToCookbook() {
    页面切换
 ===================================================== */
 
-function showPage(
-  page,
-  button
-) {
+function showPage(page, button) {
 
   const pages = [
 
@@ -2865,55 +2442,40 @@ function showPage(
   ];
 
 
-  pages.forEach(
-    function(pageName) {
+  pages.forEach(function(pageName) {
 
-      const section =
-        document.getElementById(
-          pageName
-        );
+    const section =
+      document.getElementById(
+        pageName
+      );
 
+    if (section) {
 
-      if (section) {
-
-        section.classList.add(
-          "hidden"
-        );
-
-      }
+      section.classList.add(
+        "hidden"
+      );
 
     }
-  );
 
-
-  const target =
-    document.getElementById(
-      page
-    );
-
-
-  if (target) {
-
-    target.classList.remove(
-      "hidden"
-    );
-
-  }
+  });
 
 
   document
-    .querySelectorAll(
-      "nav button"
-    )
-    .forEach(
-      function(btn) {
-
-        btn.classList.remove(
-          "active"
-        );
-
-      }
+    .getElementById(page)
+    .classList.remove(
+      "hidden"
     );
+
+
+  document
+    .querySelectorAll("nav button")
+    .forEach(function(btn) {
+
+      btn.classList.remove(
+        "active"
+      );
+
+    });
 
 
   if (button) {
@@ -2956,23 +2518,53 @@ function showPage(
 
 
 /* =====================================================
-   ⭐ 启动
+   安全显示
 ===================================================== */
 
-document.addEventListener(
-  "DOMContentLoaded",
-  function() {
+function escapeHTML(text) {
 
-    renderCategoryOptions();
+  return String(text)
 
-    loadRecipes();
+    .replaceAll(
+      "&",
+      "&amp;"
+    )
 
-    loadTodayOrders();
+    .replaceAll(
+      "<",
+      "&lt;"
+    )
 
-  }
-);
+    .replaceAll(
+      ">",
+      "&gt;"
+    )
+
+    .replaceAll(
+      '"',
+      "&quot;"
+    )
+
+    .replaceAll(
+      "'",
+      "&#039;"
+    );
+
+}
+
+
+/* =====================================================
+   启动
+===================================================== */
+
+renderCategoryOptions();
+
+loadRecipes();
+
+loadTodayOrders();
 
 </script>
 
 </body>
 </html>
+```
