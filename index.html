@@ -3,11 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>刘太厨房</title>
 
 <style>
-
 body {
   margin: 0;
   background: #fff8f2;
@@ -91,6 +89,11 @@ button.action {
   cursor: pointer;
 }
 
+button.action:disabled {
+  opacity: .6;
+  cursor: wait;
+}
+
 button.delete {
   border: 0;
   background: #eee;
@@ -115,180 +118,131 @@ select {
   display: none;
 }
 
-.empty {
+.empty,
+.loading {
   text-align: center;
   padding: 35px;
   color: #987d70;
 }
-
-.loading {
-  text-align: center;
-  padding: 30px;
-  color: #987d70;
-}
-
 </style>
 </head>
-
 
 <body>
 
 <header>
-
-<h1>🍳 刘太厨房</h1>
-
-<p>一家人的点菜 · 食谱</p>
-
+  <h1>🍳 刘太厨房</h1>
+  <p>一家人的点菜 · 食谱</p>
 </header>
 
-
 <nav>
+  <button class="active" onclick="showPage('recipes', this)">
+    📖 食谱
+  </button>
 
-<button
-class="active"
-onclick="showPage('recipes', this)">
-📖 食谱
-</button>
+  <button onclick="showPage('add', this)">
+    ➕ 添加食谱
+  </button>
 
-<button
-onclick="showPage('add', this)">
-➕ 添加食谱
-</button>
-
-<button
-onclick="showPage('today', this)">
-📋 今日菜单
-</button>
-
+  <button onclick="showPage('today', this)">
+    📋 今日菜单
+  </button>
 </nav>
-
 
 <main>
 
-
-<!-- =========================
-     食谱
-========================= -->
-
 <section id="recipes">
-
-<h2>📖 刘太食谱</h2>
-
-<div id="recipeList">
-
-<div class="loading">
-正在读取食谱……
-</div>
-
-</div>
-
+  <h2>📖 刘太食谱</h2>
+  <div id="recipeList">
+    <div class="loading">正在读取食谱……</div>
+  </div>
 </section>
 
-
-
-<!-- =========================
-     添加食谱
-========================= -->
 
 <section id="add" class="hidden">
 
-<h2>➕ 添加新食谱</h2>
+  <h2>➕ 添加新食谱</h2>
 
-<div class="card">
+  <div class="card">
 
-<label>菜名</label>
+    <label>菜名</label>
+    <input id="recipeName" placeholder="例如：黑椒鸡扒">
 
-<input
-id="recipeName"
-placeholder="例如：黑椒鸡扒">
+    <label>分类</label>
 
+    <select id="recipeCategory">
+      <option>鸡肉</option>
+      <option>猪肉</option>
+      <option>牛肉</option>
+      <option>鱼</option>
+      <option>虾</option>
+      <option>汤</option>
+      <option>意面</option>
+      <option>饭</option>
+      <option>其他</option>
+    </select>
 
-<label>分类</label>
+    <label>材料</label>
 
-<select id="recipeCategory">
+    <textarea
+      id="recipeIngredients"
+      rows="6"
+      placeholder="例如：鸡扒、黑胡椒、洋葱……"></textarea>
 
-<option>鸡肉</option>
-<option>猪肉</option>
-<option>牛肉</option>
-<option>鱼</option>
-<option>虾</option>
-<option>汤</option>
-<option>意面</option>
-<option>饭</option>
-<option>其他</option>
+    <label>做法</label>
 
-</select>
+    <textarea
+      id="recipeInstructions"
+      rows="8"
+      placeholder="写下做法……"></textarea>
 
+    <button
+      class="action"
+      id="saveButton"
+      onclick="addRecipe()">
 
-<label>材料</label>
+      保存食谱 ❤️
 
-<textarea
-id="recipeIngredients"
-rows="6"
-placeholder="例如：鸡扒、黑胡椒、洋葱……"></textarea>
+    </button>
 
-
-<label>做法</label>
-
-<textarea
-id="recipeInstructions"
-rows="8"
-placeholder="写下做法……"></textarea>
-
-
-<button
-class="action"
-onclick="addRecipe()">
-
-保存食谱 ❤️
-
-</button>
-
-</div>
+  </div>
 
 </section>
 
-
-
-<!-- =========================
-     今日菜单
-========================= -->
 
 <section id="today" class="hidden">
 
-<h2>📋 今日菜单</h2>
+  <h2>📋 今日菜单</h2>
 
-<div id="todayList"></div>
+  <div id="todayList"></div>
 
 </section>
-
 
 </main>
 
 
-
 <script>
 
-
 /* =====================================================
-   ⭐⭐⭐ 这里填你的 Supabase 资料 ⭐⭐⭐
-
-   只需要修改下面两行
+   ⭐ Supabase 设置
 ===================================================== */
 
-const SUPABASE_URL =
-"https://vgkjqpzktytadjavgzzn.supabase.co/rest/v1/";
+/*
+   这里填你自己的资料。
 
-const SUPABASE_KEY =
-"sb_publishable_4ULyasIw_XqkjnLYbs90LA_MVrn1Ami";
+   注意：
+   你的 Data API URL 已经包含 /rest/v1
+   所以代码下面不会再重复加 /rest/v1。
+*/
+
+const SUPABASE_URL = "https://vgkjqpzktytadjavgzzn.supabase.co/rest/v1/;
+const SUPABASE_KEY = "sb_publishable_4ULyasIw_XqkjnLYbs90LA_MVrn1Ami";
 
 
 /* =====================================================
-   食谱资料
+   食谱
 ===================================================== */
 
 let recipes = [];
-
 
 
 /* =====================================================
@@ -297,33 +251,26 @@ let recipes = [];
 
 async function loadRecipes() {
 
-  const recipeList =
+  const box =
     document.getElementById("recipeList");
 
-  recipeList.innerHTML =
+  box.innerHTML =
     '<div class="loading">正在读取食谱……</div>';
-
 
   try {
 
     const response = await fetch(
 
       SUPABASE_URL +
-      "/family_recipes?select=*&order=created_at.desc"",
+      "/family_recipes?select=*&order=created_at.desc",
 
       {
-
         method: "GET",
 
         headers: {
-
           "apikey": SUPABASE_KEY,
-
-          "Authorization":
-          "Bearer " + SUPABASE_KEY
-
+          "Authorization": "Bearer " + SUPABASE_KEY
         }
-
       }
 
     );
@@ -336,14 +283,14 @@ async function loadRecipes() {
 
       console.error(
         "Supabase error:",
+        response.status,
         errorText
       );
 
-      recipeList.innerHTML =
-        '<div class="empty">菜谱读取失败 😢<br>请检查 Supabase 设置。</div>';
+      box.innerHTML =
+        '<div class="empty">菜谱读取失败 😢</div>';
 
       return;
-
     }
 
 
@@ -353,18 +300,21 @@ async function loadRecipes() {
 
     renderRecipes();
 
+  }
 
-  } catch (error) {
+  catch (error) {
 
-    console.error(error);
+    console.error(
+      "Connection error:",
+      error
+    );
 
-    recipeList.innerHTML =
-      '<div class="empty">无法连接食谱数据库 😢</div>';
+    box.innerHTML =
+      '<div class="empty">菜谱读取失败 😢</div>';
 
   }
 
 }
-
 
 
 /* =====================================================
@@ -383,123 +333,91 @@ function renderRecipes() {
       '<div class="empty">还没有食谱 😊<br>点击「➕ 添加食谱」开始吧！</div>';
 
     return;
-
   }
 
 
-  box.innerHTML = recipes.map(
-
-    function(recipe) {
+  box.innerHTML =
+    recipes.map(function(recipe) {
 
       return `
 
-      <div class="card">
+        <div class="card">
 
-        <div class="food">
-          🍽️
+          <div class="food">
+            🍽️
+          </div>
+
+          <h2>
+            ${escapeHTML(recipe.name)}
+          </h2>
+
+          <span class="tag">
+            ${escapeHTML(recipe.category || "其他")}
+          </span>
+
+          <p>
+            <b>材料：</b><br>
+            ${escapeHTML(recipe.ingredients || "")}
+          </p>
+
+          <p>
+            <b>做法：</b><br>
+            ${escapeHTML(recipe.instructions || "")}
+          </p>
+
+          <button
+            class="action"
+            onclick="orderRecipe('${recipe.id}')">
+
+            我要吃 ❤️
+
+          </button>
+
         </div>
-
-        <h2>
-          ${escapeHTML(recipe.name)}
-        </h2>
-
-        <span class="tag">
-          ${escapeHTML(recipe.category || "其他")}
-        </span>
-
-        <p>
-
-          <b>材料：</b><br>
-
-          ${escapeHTML(
-            recipe.ingredients || ""
-          )}
-
-        </p>
-
-
-        <p>
-
-          <b>做法：</b><br>
-
-          ${escapeHTML(
-            recipe.instructions || ""
-          )}
-
-        </p>
-
-
-        <button
-          class="action"
-          onclick="orderRecipe('${recipe.id}')">
-
-          我要吃 ❤️
-
-        </button>
-
-      </div>
 
       `;
 
-    }
-
-  ).join("");
+    }).join("");
 
 }
 
 
-
 /* =====================================================
-   添加食谱到 Supabase
+   添加食谱
 ===================================================== */
 
 async function addRecipe() {
 
-
   const name =
-    document
-    .getElementById("recipeName")
+    document.getElementById("recipeName")
     .value
     .trim();
-
 
   const category =
-    document
-    .getElementById("recipeCategory")
+    document.getElementById("recipeCategory")
     .value;
 
-
   const ingredients =
-    document
-    .getElementById("recipeIngredients")
+    document.getElementById("recipeIngredients")
     .value
     .trim();
-
 
   const instructions =
-    document
-    .getElementById("recipeInstructions")
+    document.getElementById("recipeInstructions")
     .value
     .trim();
-
 
 
   if (!name) {
 
-    alert(
-      "请先填写菜名 ❤️"
-    );
+    alert("请先填写菜名 ❤️");
 
     return;
-
   }
 
 
-
   const saveButton =
-    document.querySelector(
-      "#add button.action"
-    );
+    document.getElementById("saveButton");
 
 
   saveButton.disabled = true;
@@ -508,15 +426,13 @@ async function addRecipe() {
     "正在保存……";
 
 
-
   try {
-
 
     const response =
       await fetch(
 
         SUPABASE_URL +
-        "/rest/v1/family_recipes",
+        "/family_recipes",
 
         {
 
@@ -525,37 +441,39 @@ async function addRecipe() {
           headers: {
 
             "apikey":
-            SUPABASE_KEY,
+              SUPABASE_KEY,
 
             "Authorization":
-            "Bearer " + SUPABASE_KEY,
+              "Bearer " + SUPABASE_KEY,
 
             "Content-Type":
-            "application/json",
+              "application/json",
 
             "Prefer":
-            "return=representation"
+              "return=representation"
 
           },
 
-
           body:
-          JSON.stringify({
+            JSON.stringify({
 
-            name: name,
+              name:
+                name,
 
-            category: category,
+              category:
+                category,
 
-            ingredients: ingredients,
+              ingredients:
+                ingredients,
 
-            instructions: instructions
+              instructions:
+                instructions
 
-          })
+            })
 
         }
 
       );
-
 
 
     if (!response.ok) {
@@ -565,6 +483,7 @@ async function addRecipe() {
 
       console.error(
         "Save error:",
+        response.status,
         errorText
       );
 
@@ -574,9 +493,7 @@ async function addRecipe() {
       );
 
       return;
-
     }
-
 
 
     alert(
@@ -584,20 +501,17 @@ async function addRecipe() {
     );
 
 
+    document
+      .getElementById("recipeName")
+      .value = "";
 
     document
-    .getElementById("recipeName")
-    .value = "";
-
-
-    document
-    .getElementById("recipeIngredients")
-    .value = "";
-
+      .getElementById("recipeIngredients")
+      .value = "";
 
     document
-    .getElementById("recipeInstructions")
-    .value = "";
+      .getElementById("recipeInstructions")
+      .value = "";
 
 
     await loadRecipes();
@@ -610,16 +524,22 @@ async function addRecipe() {
       )
     );
 
+  }
 
-  } catch (error) {
+  catch (error) {
 
-    console.error(error);
+    console.error(
+      "Save connection error:",
+      error
+    );
 
     alert(
       "无法连接数据库 😢"
     );
 
-  } finally {
+  }
+
+  finally {
 
     saveButton.disabled =
       false;
@@ -632,28 +552,24 @@ async function addRecipe() {
 }
 
 
-
 /* =====================================================
    点菜
 ===================================================== */
 
 function orderRecipe(id) {
 
-
   const recipe =
-    recipes.find(
+    recipes.find(function(item) {
 
-      function(item) {
+      return String(item.id) ===
+        String(id);
 
-        return String(item.id) ===
-               String(id);
-
-      }
-
-    );
+    });
 
 
-  if (!recipe) return;
+  if (!recipe) {
+    return;
+  }
 
 
   let today =
@@ -668,16 +584,17 @@ function orderRecipe(id) {
 
   today.push({
 
-    name: recipe.name,
+    name:
+      recipe.name,
 
     time:
-    new Date().toLocaleTimeString(
-      "zh-CN",
-      {
-        hour: "2-digit",
-        minute: "2-digit"
-      }
-    )
+      new Date().toLocaleTimeString(
+        "zh-CN",
+        {
+          hour: "2-digit",
+          minute: "2-digit"
+        }
+      )
 
   });
 
@@ -702,13 +619,11 @@ function orderRecipe(id) {
 }
 
 
-
 /* =====================================================
    今日菜单
 ===================================================== */
 
 function renderToday() {
-
 
   const box =
     document.getElementById(
@@ -737,11 +652,9 @@ function renderToday() {
 
 
   box.innerHTML =
-    today.map(
+    today.map(function(item, index) {
 
-      function(item, index) {
-
-        return `
+      return `
 
         <div class="card">
 
@@ -764,22 +677,18 @@ function renderToday() {
 
         </div>
 
-        `;
+      `;
 
-      }
-
-    ).join("");
+    }).join("");
 
 }
 
 
-
 /* =====================================================
-   删除今日菜单
+   删除点菜
 ===================================================== */
 
 function removeOrder(index) {
-
 
   let today =
     JSON.parse(
@@ -808,47 +717,39 @@ function removeOrder(index) {
 }
 
 
-
 /* =====================================================
    页面切换
 ===================================================== */
 
 function showPage(page, button) {
 
+  document
+    .getElementById("recipes")
+    .classList.add("hidden");
 
   document
-  .getElementById("recipes")
-  .classList.add("hidden");
-
-
-  document
-  .getElementById("add")
-  .classList.add("hidden");
-
+    .getElementById("add")
+    .classList.add("hidden");
 
   document
-  .getElementById("today")
-  .classList.add("hidden");
+    .getElementById("today")
+    .classList.add("hidden");
 
 
   document
-  .getElementById(page)
-  .classList.remove("hidden");
+    .getElementById(page)
+    .classList.remove("hidden");
 
 
   document
-  .querySelectorAll("nav button")
-  .forEach(
-
-    function(btn) {
+    .querySelectorAll("nav button")
+    .forEach(function(btn) {
 
       btn.classList.remove(
         "active"
       );
 
-    }
-
-  );
+    });
 
 
   button.classList.add(
@@ -872,9 +773,8 @@ function showPage(page, button) {
 }
 
 
-
 /* =====================================================
-   防止特殊字符破坏网页
+   安全显示文字
 ===================================================== */
 
 function escapeHTML(text) {
@@ -907,7 +807,6 @@ function escapeHTML(text) {
     );
 
 }
-
 
 
 /* =====================================================
