@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>刘太厨房</title>
+
+<style>
+body {
+  margin: 0;
+  background: #fff8f2;
+  color: #3d2b24;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+}
+
+header {
+  background: #f4c4a4;
+  text-align: center;
+  padding: 30px 20px;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 30px;
+}
+
+header p {
+  margin: 8px 0 0;
+}
+
+nav {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 15px;
+  background: white;
+  overflow-x: auto;
+}
+
+nav button {
+  border: 0;
+  border-radius: 20px;
+  padding: 10px 15px;
+  background: #fff0e5;
+  color: #8a573d;
+  white-space: nowrap;
+}
+
+nav button.active {
+  background: #e69765;
+  color: white;
+}
+
+main {
+  max-width: 650px;
+  margin: auto;
+  padding: 18px;
+}
+
+.card {
+  background: white;
+  border-radius: 20px;
+  padding: 18px;
+  margin-bottom: 15px;
+  box-shadow: 0 3px 12px rgba(0,0,0,.06);
+}
+
+.food {
+  font-size: 42px;
+}
+
+.tag {
+  display: inline-block;
+  background: #fff0e5;
+  color: #9a5e3d;
+  padding: 5px 9px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+button.action {
+  border: 0;
+  background: #e69765;
+  color: white;
+  padding: 11px 17px;
+  border-radius: 14px;
+  font-weight: bold;
+}
+
+button.delete {
+  border: 0;
+  background: #eee;
+  padding: 8px 12px;
+  border-radius: 12px;
+}
+
+input, textarea, select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  margin: 7px 0 14px;
+  border: 1px solid #ead8cc;
+  border-radius: 12px;
+  font-size: 16px;
+}
+
+.hidden {
+  display: none;
+}
+
+.empty {
+  text-align: center;
+  padding: 35px;
+  color: #987d70;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>🍳 刘太厨房</h1>
+  <p>一家人的点菜 · 食谱</p>
+</header>
+
+<nav>
+  <button class="active" onclick="showPage('recipes', this)">
+    📖 食谱
+  </button>
+
+  <button onclick="showPage('add', this)">
+    ➕ 添加食谱
+  </button>
+
+  <button onclick="showPage('today', this)">
+    📋 今日菜单
+  </button>
+</nav>
+
+<main>
+
+<!-- 食谱 -->
+<section id="recipes">
+
+  <h2>📖 我的食谱</h2>
+
+  <div id="recipeList"></div>
+
+</section>
+
+
+<!-- 添加食谱 -->
+<section id="add" class="hidden">
+
+  <h2>➕ 添加新食谱</h2>
+
+  <div class="card">
+
+    <label>菜名</label>
+
+    <input
+      id="recipeName"
+      placeholder="例如：黑椒鸡扒"
+    >
+
+    <label>分类</label>
+
+    <select id="recipeCategory">
+
+      <option>鸡肉</option>
+      <option>猪肉</option>
+      <option>牛肉</option>
+      <option>鱼</option>
+      <option>汤</option>
+      <option>意面</option>
+      <option>其他</option>
+
+    </select>
+
+    <label>材料</label>
+
+    <textarea
+      id="recipeIngredients"
+      rows="5"
+      placeholder="例如：鸡扒、黑胡椒、洋葱……"
+    ></textarea>
+
+    <label>做法</label>
+
+    <textarea
+      id="recipeInstructions"
+      rows="7"
+      placeholder="写下做法……"
+    ></textarea>
+
+    <button class="action" onclick="addRecipe()">
+      保存食谱 ❤️
+    </button>
+
+  </div>
+
+</section>
+
+
+<!-- 今日菜单 -->
+<section id="today" class="hidden">
+
+  <h2>📋 今日菜单</h2>
+
+  <div id="todayList"></div>
+
+</section>
+
+</main>
+
+
+<script>
+
+/* =========================
+   默认食谱
+========================= */
+
+let recipes = JSON.parse(
+  localStorage.getItem("liuTaiRecipes") || "[]"
+);
+
+
+/* =========================
+   显示食谱
+========================= */
+
+function renderRecipes() {
+
+  const box = document.getElementById("recipeList");
+
+  if (recipes.length === 0) {
+
+    box.innerHTML =
+      '<div class="empty">还没有食谱 😊<br>点击「➕ 添加食谱」开始吧！</div>';
+
+    return;
+  }
+
+  box.innerHTML = recipes.map((recipe, index) => {
+
+    return `
+      <div class="card">
+
+        <div class="food">🍽️</div>
+
+        <h2>${escapeHTML(recipe.name)}</h2>
+
+        <span class="tag">
+          ${escapeHTML(recipe.category)}
+        </span>
+
+        <p>
+          <b>材料：</b><br>
+          ${escapeHTML(recipe.ingredients)}
+        </p>
+
+        <p>
+          <b>做法：</b><br>
+          ${escapeHTML(recipe.instructions)}
+        </p>
+
+        <button
+          class="action"
+          onclick="orderRecipe(${index})"
+        >
+          我要吃 ❤️
+        </button>
+
+      </div>
+    `;
+
+  }).join("");
+}
+
+
+/* =========================
+   添加食谱
+========================= */
+
+function addRecipe() {
+
+  const name =
+    document.getElementById("recipeName").value.trim();
+
+  const category =
+    document.getElementById("recipeCategory").value;
+
+  const ingredients =
+    document.getElementById("recipeIngredients").value.trim();
+
+  const instructions =
+    document.getElementById("recipeInstructions").value.trim();
+
+
+  if (!name) {
+
+    alert("请先填写菜名 ❤️");
+
+    return;
+  }
+
+
+  const recipe = {
+
+    name: name,
+
+    category: category,
+
+    ingredients: ingredients,
+
+    instructions: instructions
+
+  };
+
+
+  recipes.push(recipe);
+
+
+  localStorage.setItem(
+    "liuTaiRecipes",
+    JSON.stringify(recipes)
+  );
+
+
+  document.getElementById("recipeName").value = "";
+
+  document.getElementById("recipeIngredients").value = "";
+
+  document.getElementById("recipeInstructions").value = "";
+
+
+  alert("食谱保存成功 ❤️");
+
+
+  renderRecipes();
+
+
+  showPage(
+    "recipes",
+    document.querySelector("nav button")
+  );
+
+}
+
+
+/* =========================
+   点菜
+========================= */
+
+function orderRecipe(index) {
+
+  const recipe = recipes[index];
+
+  let today = JSON.parse(
+    localStorage.getItem("liuTaiToday") || "[]"
+  );
+
+
+  today.push({
+
+    name: recipe.name,
+
+    time: new Date().toLocaleTimeString(
+      "zh-CN",
+      {
+        hour: "2-digit",
+        minute: "2-digit"
+      }
+    )
+
+  });
+
+
+  localStorage.setItem(
+    "liuTaiToday",
+    JSON.stringify(today)
+  );
+
+
+  alert(
+    recipe.name + " 已加入今日菜单 ❤️"
+  );
+
+
+  renderToday();
+
+}
+
+
+/* =========================
+   今日菜单
+========================= */
+
+function renderToday() {
+
+  const box =
+    document.getElementById("todayList");
+
+
+  const today = JSON.parse(
+    localStorage.getItem("liuTaiToday") || "[]"
+  );
+
+
+  if (today.length === 0) {
+
+    box.innerHTML =
+      '<div class="empty">今天还没有人点菜 😊</div>';
+
+    return;
+  }
+
+
+  box.innerHTML = today.map((item, index) => {
+
+    return `
+      <div class="card">
+
+        <h2>🍽️ ${escapeHTML(item.name)}</h2>
+
+        <p>
+          点菜时间：${escapeHTML(item.time)}
+        </p>
+
+        <button
+          class="delete"
+          onclick="removeOrder(${index})"
+        >
+          取消
+        </button>
+
+      </div>
+    `;
+
+  }).join("");
+}
+
+
+/* =========================
+   删除点菜
+========================= */
+
+function removeOrder(index) {
+
+  let today = JSON.parse(
+    localStorage.getItem("liuTaiToday") || "[]"
+  );
+
+
+  today.splice(index, 1);
+
+
+  localStorage.setItem(
+    "liuTaiToday",
+    JSON.stringify(today)
+  );
+
+
+  renderToday();
+}
+
+
+/* =========================
+   页面切换
+========================= */
+
+function showPage(page, button) {
+
+  document
+    .getElementById("recipes")
+    .classList.add("hidden");
+
+  document
+    .getElementById("add")
+    .classList.add("hidden");
+
+  document
+    .getElementById("today")
+    .classList.add("hidden");
+
+
+  document
+    .getElementById(page)
+    .classList.remove("hidden");
+
+
+  document
+    .querySelectorAll("nav button")
+    .forEach(function(btn) {
+
+      btn.classList.remove("active");
+
+    });
+
+
+  button.classList.add("active");
+
+
+  if (page === "recipes") {
+    renderRecipes();
+  }
+
+
+  if (page === "today") {
+    renderToday();
+  }
+
+}
+
+
+/* =========================
+   安全显示文字
+========================= */
+
+function escapeHTML(text) {
+
+  return String(text)
+
+    .replaceAll("&", "&amp;")
+
+    .replaceAll("<", "&lt;")
+
+    .replaceAll(">", "&gt;")
+
+    .replaceAll('"', "&quot;")
+
+    .replaceAll("'", "&#039;");
+
+}
+
+
+/* =========================
+   开始
+========================= */
+
+renderRecipes();
+
+renderToday();
+
+</script>
+
+</body>
+</html>
