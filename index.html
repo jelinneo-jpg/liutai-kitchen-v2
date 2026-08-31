@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="zh-CN">
 
@@ -7,7 +8,7 @@
 
 <meta
   name="viewport"
-  content="width=device-width, initial-scale=1.0">
+  content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
 <title>刘太厨房</title>
 
@@ -15,6 +16,13 @@
 
 * {
   box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 body {
@@ -45,14 +53,30 @@ header p {
 
 nav {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
+  align-items: center;
   gap: 8px;
-  padding: 15px;
+  padding: 15px 12px;
   background: white;
+
+  width: 100%;
+  max-width: 100%;
+
   overflow-x: auto;
+  overflow-y: hidden;
+
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+nav::-webkit-scrollbar {
+  display: none;
 }
 
 nav button {
+  flex: 0 0 auto;
+  display: block;
+
   border: 0;
   border-radius: 20px;
   padding: 10px 15px;
@@ -61,6 +85,7 @@ nav button {
   white-space: nowrap;
   cursor: pointer;
   font-size: 15px;
+  min-width: max-content;
 }
 
 nav button.active {
@@ -69,6 +94,7 @@ nav button.active {
 }
 
 main {
+  width: 100%;
   max-width: 650px;
   margin: auto;
   padding: 18px;
@@ -409,6 +435,53 @@ button.recipe-delete {
   margin-bottom: 15px;
 }
 
+
+/* =====================================================
+   📱 手机显示修复
+   防止 OPPO Chrome 自动把页面当成桌面布局
+===================================================== */
+
+@media (max-width: 700px) {
+
+  html,
+  body {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  header {
+    width: 100%;
+  }
+
+  nav {
+    width: 100%;
+    max-width: 100%;
+    justify-content: flex-start;
+    padding-left: 10px;
+    padding-right: 10px;
+    overflow-x: auto;
+  }
+
+  nav button {
+    flex: 0 0 auto;
+    min-width: max-content;
+  }
+
+  main {
+    width: 100%;
+    max-width: 650px;
+    padding: 15px;
+  }
+
+  .category-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+}
+
+
 @media (max-width: 420px) {
 
   .food-icon {
@@ -421,6 +494,15 @@ button.recipe-delete {
 
   .ingredient-row input {
     min-width: 0;
+  }
+
+  nav {
+    gap: 7px;
+  }
+
+  nav button {
+    padding: 9px 13px;
+    font-size: 14px;
   }
 
 }
@@ -463,8 +545,6 @@ button.recipe-delete {
     📖 食谱
   </button>
 
-  <!-- ⭐ 新增：添加食谱 -->
-
   <button
     onclick="showPage('addRecipe', this)">
     ➕ 添加食谱
@@ -476,10 +556,6 @@ button.recipe-delete {
 <main>
 
 
-<!-- =====================================================
-     🍽️ 食物
-===================================================== -->
-
 <section id="foods">
 
   <h2>🍽️ 刘太食物</h2>
@@ -489,7 +565,7 @@ button.recipe-delete {
     class="search-box"
     type="search"
     placeholder="🔍 搜索食物，例如：鸡、汤、意大利面"
-    oninput="searchFoods()">
+    oninput="searchFoods">
 
   <div id="foodList">
 
@@ -501,10 +577,6 @@ button.recipe-delete {
 
 </section>
 
-
-<!-- =====================================================
-     ➕ 添加食物
-===================================================== -->
 
 <section id="addFood" class="hidden">
 
@@ -539,10 +611,6 @@ button.recipe-delete {
 </section>
 
 
-<!-- =====================================================
-     📋 今日菜单
-===================================================== -->
-
 <section id="today" class="hidden">
 
   <h2>📋 今日菜单</h2>
@@ -557,10 +625,6 @@ button.recipe-delete {
 
 </section>
 
-
-<!-- =====================================================
-     📖 食谱
-===================================================== -->
 
 <section id="cookbook" class="hidden">
 
@@ -583,10 +647,6 @@ button.recipe-delete {
 
 </section>
 
-
-<!-- =====================================================
-     ➕ 添加食谱
-===================================================== -->
 
 <section id="addRecipe" class="hidden">
 
@@ -725,10 +785,6 @@ button.recipe-delete {
 
 </section>
 
-
-<!-- =====================================================
-     📖 食谱详情
-===================================================== -->
 
 <section id="recipeDetail" class="hidden">
 
@@ -4059,3 +4115,4 @@ document.addEventListener(
 </body>
 
 </html>
+```
