@@ -396,6 +396,19 @@ button.recipe-delete {
   font-size: 14px;
 }
 
+.form-label {
+  display: block;
+  font-weight: bold;
+  margin-top: 8px;
+  margin-bottom: 3px;
+}
+
+.add-recipe-title {
+  font-size: 20px;
+  margin-top: 5px;
+  margin-bottom: 15px;
+}
+
 @media (max-width: 420px) {
 
   .food-icon {
@@ -448,6 +461,13 @@ button.recipe-delete {
   <button
     onclick="showPage('cookbook', this)">
     📖 食谱
+  </button>
+
+  <!-- ⭐ 新增：添加食谱 -->
+
+  <button
+    onclick="showPage('addRecipe', this)">
+    ➕ 添加食谱
   </button>
 
 </nav>
@@ -565,6 +585,148 @@ button.recipe-delete {
 
 
 <!-- =====================================================
+     ➕ 添加食谱
+===================================================== -->
+
+<section id="addRecipe" class="hidden">
+
+  <h2>➕ 添加食谱</h2>
+
+  <div class="card">
+
+    <div class="notice">
+
+      📖 新增的食谱会独立保存在「刘太食谱」里。<br>
+      🍽️ 不会影响「食物」列表。
+
+    </div>
+
+
+    <label class="form-label">
+      食谱名字
+    </label>
+
+    <input
+      id="newRecipeName"
+      placeholder="例如：北海道味噌黄油三文鱼">
+
+
+    <label class="form-label">
+      选择分类
+    </label>
+
+    <div
+      id="recipeCategoryGrid"
+      class="category-grid">
+    </div>
+
+
+    <h3 class="recipe-section-title">
+      🥕 材料
+    </h3>
+
+    <div id="newIngredientEditor">
+
+      <div class="ingredient-row">
+
+        <input
+          class="ingredient-name"
+          placeholder="材料，例如：三文鱼">
+
+        <input
+          class="ingredient-amount"
+          placeholder="分量，例如：2片">
+
+        <button
+          type="button"
+          class="small-delete"
+          onclick="this.parentElement.remove()">
+
+          🗑️
+
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <button
+      type="button"
+      class="add-row-button"
+      onclick="addNewIngredientRow()">
+
+      ➕ 添加材料
+
+    </button>
+
+
+    <h3 class="recipe-section-title">
+      👩‍🍳 做法
+    </h3>
+
+    <div id="newStepEditor">
+
+      <div class="step-row">
+
+        <div class="step-number">
+          1
+        </div>
+
+        <textarea
+          class="step-text"
+          placeholder="请输入第一个步骤……"></textarea>
+
+        <button
+          type="button"
+          class="small-delete"
+          onclick="removeNewStep(this)">
+
+          🗑️
+
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <button
+      type="button"
+      class="add-row-button"
+      onclick="addNewStepRow()">
+
+      ➕ 添加步骤
+
+    </button>
+
+
+    <h3 class="recipe-section-title">
+      🔗 食谱 Link
+    </h3>
+
+    <input
+      id="newRecipeLink"
+      class="recipe-link-input"
+      type="url"
+      placeholder="例如：https://www.youtube.com/...">
+
+
+    <button
+      class="save-recipe"
+      id="saveNewRecipeButton"
+      onclick="addRecipe()">
+
+      💾 保存新食谱 ❤️
+
+    </button>
+
+  </div>
+
+</section>
+
+
+<!-- =====================================================
      📖 食谱详情
 ===================================================== -->
 
@@ -605,6 +767,8 @@ let foods = [];
 let recipes = [];
 
 let selectedCategory = "";
+
+let selectedRecipeCategory = "";
 
 let currentRecipe = null;
 
@@ -749,7 +913,7 @@ function getCategoryIcon(category) {
 
 
 /* =====================================================
-   分类
+   🍽️ 食物分类
 ===================================================== */
 
 function renderCategoryOptions() {
@@ -800,6 +964,62 @@ function selectCategory(category) {
     category;
 
   renderCategoryOptions();
+
+}
+
+
+/* =====================================================
+   📖 食谱分类
+===================================================== */
+
+function renderRecipeCategoryOptions() {
+
+  const box =
+    document.getElementById(
+      "recipeCategoryGrid"
+    );
+
+  if (!box) return;
+
+
+  box.innerHTML =
+
+    categories.map(function(category) {
+
+      const selected =
+        selectedRecipeCategory === category.name
+          ? "selected"
+          : "";
+
+
+      return `
+
+        <button
+          type="button"
+          class="category-option ${selected}"
+          onclick="selectRecipeCategory('${escapeHTML(category.name)}')">
+
+          <span class="category-icon">
+            ${category.icon}
+          </span>
+
+          ${escapeHTML(category.name)}
+
+        </button>
+
+      `;
+
+    }).join("");
+
+}
+
+
+function selectRecipeCategory(category) {
+
+  selectedRecipeCategory =
+    category;
+
+  renderRecipeCategoryOptions();
 
 }
 
@@ -1304,7 +1524,6 @@ async function addFood() {
 
 /* =====================================================
    🗑️ 删除食物
-   ⚠️ 只删除 family_foods
 ===================================================== */
 
 async function deleteFood(id) {
@@ -1897,9 +2116,19 @@ function renderCookbook(list) {
 
   if (!data.length) {
 
-    box.innerHTML =
+    box.innerHTML = `
 
-      '<div class="empty">还没有食谱 😊</div>';
+      <div class="empty">
+
+        还没有食谱 😊
+
+        <br><br>
+
+        点击上面的「➕ 添加食谱」开始添加 ❤️
+
+      </div>
+
+    `;
 
     return;
 
@@ -1910,72 +2139,83 @@ function renderCookbook(list) {
 
     data.map(function(recipe) {
 
-      const icon =
-        getCategoryIcon(
-          recipe.category
-        );
-
-
-      const id =
-        escapeHTML(
-          String(recipe.id)
-        );
-
-
-      return `
-
-        <div class="card recipe-list-card">
-
-          <div
-            onclick="openRecipe('${id}')">
-
-            <div class="food-icon">
-              ${icon}
-            </div>
-
-            <h2 class="food-name">
-
-              ${escapeHTML(
-                recipe.name || "未命名食谱"
-              )}
-
-            </h2>
-
-            <span class="tag">
-
-              ${icon}
-
-              ${escapeHTML(
-                recipe.category || "其他"
-              )}
-
-            </span>
-
-          </div>
-
-
-          <button
-            class="recipe-button"
-            onclick="openRecipe('${id}')">
-
-            📖 查看 / 编辑食谱
-
-          </button>
-
-
-          <button
-            class="delete"
-            onclick="deleteRecipe('${id}')">
-
-            🗑️ 删除食谱
-
-          </button>
-
-        </div>
-
-      `;
+      return recipeCardHTML(recipe);
 
     }).join("");
+
+}
+
+
+/* =====================================================
+   📖 食谱卡片
+===================================================== */
+
+function recipeCardHTML(recipe) {
+
+  const icon =
+    getCategoryIcon(
+      recipe.category
+    );
+
+
+  const id =
+    escapeHTML(
+      String(recipe.id)
+    );
+
+
+  return `
+
+    <div class="card recipe-list-card">
+
+      <div
+        onclick="openRecipe('${id}')">
+
+        <div class="food-icon">
+          ${icon}
+        </div>
+
+        <h2 class="food-name">
+
+          ${escapeHTML(
+            recipe.name || "未命名食谱"
+          )}
+
+        </h2>
+
+        <span class="tag">
+
+          ${icon}
+
+          ${escapeHTML(
+            recipe.category || "其他"
+          )}
+
+        </span>
+
+      </div>
+
+
+      <button
+        class="recipe-button"
+        onclick="openRecipe('${id}')">
+
+        📖 查看 / 编辑食谱
+
+      </button>
+
+
+      <button
+        class="delete"
+        onclick="deleteRecipe('${id}')">
+
+        🗑️ 删除食谱
+
+      </button>
+
+    </div>
+
+  `;
 
 }
 
@@ -2025,11 +2265,27 @@ function searchRecipes() {
         ).toLowerCase();
 
 
+      const ingredients =
+        String(
+          recipe.ingredients || ""
+        ).toLowerCase();
+
+
+      const instructions =
+        String(
+          recipe.instructions || ""
+        ).toLowerCase();
+
+
       return (
 
         name.includes(keyword) ||
 
-        category.includes(keyword)
+        category.includes(keyword) ||
+
+        ingredients.includes(keyword) ||
+
+        instructions.includes(keyword)
 
       );
 
@@ -2069,74 +2325,522 @@ function searchRecipes() {
 
     ${filtered.map(function(recipe) {
 
-      const icon =
-        getCategoryIcon(
-          recipe.category
-        );
-
-
-      const id =
-        escapeHTML(
-          String(recipe.id)
-        );
-
-
-      return `
-
-        <div class="card recipe-list-card">
-
-          <div
-            onclick="openRecipe('${id}')">
-
-            <div class="food-icon">
-              ${icon}
-            </div>
-
-            <h2 class="food-name">
-
-              ${escapeHTML(
-                recipe.name || "未命名食谱"
-              )}
-
-            </h2>
-
-            <span class="tag">
-
-              ${icon}
-
-              ${escapeHTML(
-                recipe.category || "其他"
-              )}
-
-            </span>
-
-          </div>
-
-
-          <button
-            class="recipe-button"
-            onclick="openRecipe('${id}')">
-
-            📖 查看 / 编辑食谱
-
-          </button>
-
-
-          <button
-            class="delete"
-            onclick="deleteRecipe('${id}')">
-
-            🗑️ 删除食谱
-
-          </button>
-
-        </div>
-
-      `;
+      return recipeCardHTML(recipe);
 
     }).join("")}
 
   `;
+
+}
+
+
+/* =====================================================
+   ➕ 新增食谱：材料
+===================================================== */
+
+function addNewIngredientRow() {
+
+  const box =
+    document.getElementById(
+      "newIngredientEditor"
+    );
+
+
+  if (!box) return;
+
+
+  const div =
+    document.createElement(
+      "div"
+    );
+
+
+  div.innerHTML = `
+
+    <div class="ingredient-row">
+
+      <input
+        class="ingredient-name"
+        placeholder="材料，例如：鸡腿肉">
+
+      <input
+        class="ingredient-amount"
+        placeholder="分量，例如：2块">
+
+      <button
+        type="button"
+        class="small-delete"
+        onclick="this.parentElement.remove()">
+
+        🗑️
+
+      </button>
+
+    </div>
+
+  `;
+
+
+  box.appendChild(
+    div.firstElementChild
+  );
+
+}
+
+
+/* =====================================================
+   ➕ 新增食谱：步骤
+===================================================== */
+
+function addNewStepRow() {
+
+  const box =
+    document.getElementById(
+      "newStepEditor"
+    );
+
+
+  if (!box) return;
+
+
+  const index =
+    box.children.length;
+
+
+  const div =
+    document.createElement(
+      "div"
+    );
+
+
+  div.innerHTML = `
+
+    <div class="step-row">
+
+      <div class="step-number">
+
+        ${index + 1}
+
+      </div>
+
+      <textarea
+        class="step-text"
+        placeholder="请输入这个步骤……"></textarea>
+
+      <button
+        type="button"
+        class="small-delete"
+        onclick="removeNewStep(this)">
+
+        🗑️
+
+      </button>
+
+    </div>
+
+  `;
+
+
+  box.appendChild(
+    div.firstElementChild
+  );
+
+
+  refreshNewStepNumbers();
+
+}
+
+
+function removeNewStep(button) {
+
+  if (!button) return;
+
+
+  button.parentElement.remove();
+
+
+  refreshNewStepNumbers();
+
+}
+
+
+function refreshNewStepNumbers() {
+
+  const rows =
+    document.querySelectorAll(
+      "#newStepEditor .step-row"
+    );
+
+
+  rows.forEach(
+    function(row, index) {
+
+      const number =
+        row.querySelector(
+          ".step-number"
+        );
+
+
+      if (number) {
+
+        number.textContent =
+          index + 1;
+
+      }
+
+    }
+  );
+
+}
+
+
+/* =====================================================
+   💾 新增食谱
+===================================================== */
+
+async function addRecipe() {
+
+  const nameInput =
+    document.getElementById(
+      "newRecipeName"
+    );
+
+
+  const name =
+    nameInput.value.trim();
+
+
+  if (!name) {
+
+    alert(
+      "请先填写食谱名字 ❤️"
+    );
+
+    return;
+
+  }
+
+
+  if (!selectedRecipeCategory) {
+
+    alert(
+      "请选择食谱分类 ❤️"
+    );
+
+    return;
+
+  }
+
+
+  const ingredientRows =
+    document.querySelectorAll(
+      "#newIngredientEditor .ingredient-row"
+    );
+
+
+  const ingredients = [];
+
+
+  ingredientRows.forEach(
+    function(row) {
+
+      const name =
+        row.querySelector(
+          ".ingredient-name"
+        ).value.trim();
+
+
+      const amount =
+        row.querySelector(
+          ".ingredient-amount"
+        ).value.trim();
+
+
+      if (name || amount) {
+
+        ingredients.push({
+
+          name: name,
+
+          amount: amount
+
+        });
+
+      }
+
+    }
+  );
+
+
+  const stepRows =
+    document.querySelectorAll(
+      "#newStepEditor .step-row"
+    );
+
+
+  const instructions = [];
+
+
+  stepRows.forEach(
+    function(row) {
+
+      const text =
+        row.querySelector(
+          ".step-text"
+        ).value.trim();
+
+
+      if (text) {
+
+        instructions.push(text);
+
+      }
+
+    }
+  );
+
+
+  const linkInput =
+    document.getElementById(
+      "newRecipeLink"
+    );
+
+
+  const recipeLink =
+    linkInput
+      ? linkInput.value.trim()
+      : "";
+
+
+  const button =
+    document.getElementById(
+      "saveNewRecipeButton"
+    );
+
+
+  button.disabled = true;
+
+  button.textContent =
+    "正在保存……";
+
+
+  try {
+
+    const response =
+      await supabaseFetch(
+
+        "/family_recipes",
+
+        {
+
+          method: "POST",
+
+          headers: {
+
+            "Content-Type":
+              "application/json",
+
+            "Prefer":
+              "return=representation"
+
+          },
+
+          body: JSON.stringify({
+
+            name: name,
+
+            category:
+              selectedRecipeCategory,
+
+            ingredients:
+              JSON.stringify(
+                ingredients
+              ),
+
+            instructions:
+              JSON.stringify(
+                instructions
+              ),
+
+            recipe_link:
+              recipeLink || null
+
+          })
+
+        }
+
+      );
+
+
+    const text =
+      await response.text();
+
+
+    if (!response.ok) {
+
+      alert(
+        "保存新食谱失败 😢\n\n" +
+        text
+      );
+
+      return;
+
+    }
+
+
+    alert(
+      "新食谱保存成功 ❤️"
+    );
+
+
+    resetNewRecipeForm();
+
+
+    await loadRecipes();
+
+
+    const cookbookButton =
+      document.querySelectorAll(
+        "nav button"
+      )[3];
+
+
+    showPage(
+      "cookbook",
+      cookbookButton
+    );
+
+  }
+
+  catch (error) {
+
+    alert(
+      "无法连接数据库 😢\n\n" +
+      error.message
+    );
+
+  }
+
+  finally {
+
+    button.disabled = false;
+
+    button.textContent =
+      "💾 保存新食谱 ❤️";
+
+  }
+
+}
+
+
+/* =====================================================
+   🧹 清空新增食谱表格
+===================================================== */
+
+function resetNewRecipeForm() {
+
+  const nameInput =
+    document.getElementById(
+      "newRecipeName"
+    );
+
+
+  const linkInput =
+    document.getElementById(
+      "newRecipeLink"
+    );
+
+
+  if (nameInput) {
+
+    nameInput.value = "";
+
+  }
+
+
+  if (linkInput) {
+
+    linkInput.value = "";
+
+  }
+
+
+  selectedRecipeCategory = "";
+
+
+  renderRecipeCategoryOptions();
+
+
+  const ingredientBox =
+    document.getElementById(
+      "newIngredientEditor"
+    );
+
+
+  if (ingredientBox) {
+
+    ingredientBox.innerHTML = `
+
+      <div class="ingredient-row">
+
+        <input
+          class="ingredient-name"
+          placeholder="材料，例如：三文鱼">
+
+        <input
+          class="ingredient-amount"
+          placeholder="分量，例如：2片">
+
+        <button
+          type="button"
+          class="small-delete"
+          onclick="this.parentElement.remove()">
+
+          🗑️
+
+        </button>
+
+      </div>
+
+    `;
+
+  }
+
+
+  const stepBox =
+    document.getElementById(
+      "newStepEditor"
+    );
+
+
+  if (stepBox) {
+
+    stepBox.innerHTML = `
+
+      <div class="step-row">
+
+        <div class="step-number">
+          1
+        </div>
+
+        <textarea
+          class="step-text"
+          placeholder="请输入第一个步骤……"></textarea>
+
+        <button
+          type="button"
+          class="small-delete"
+          onclick="removeNewStep(this)">
+
+          🗑️
+
+        </button>
+
+      </div>
+
+    `;
+
+  }
 
 }
 
@@ -2188,7 +2892,6 @@ function openRecipe(id) {
 
 /* =====================================================
    🗑️ 删除食谱
-   ⚠️ 只删除 family_recipes
 ===================================================== */
 
 async function deleteRecipe(id) {
@@ -3189,6 +3892,7 @@ function showPage(page, button) {
     "addFood",
     "today",
     "cookbook",
+    "addRecipe",
     "recipeDetail"
 
   ];
@@ -3281,6 +3985,13 @@ function showPage(page, button) {
 
   }
 
+
+  if (page === "addRecipe") {
+
+    renderRecipeCategoryOptions();
+
+  }
+
 }
 
 
@@ -3331,6 +4042,8 @@ document.addEventListener(
   function() {
 
     renderCategoryOptions();
+
+    renderRecipeCategoryOptions();
 
     loadFoods();
 
