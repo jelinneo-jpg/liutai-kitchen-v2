@@ -199,7 +199,8 @@ button.back-button {
 }
 
 input,
-textarea {
+textarea,
+select {
   width: 100%;
   padding: 12px;
   margin: 7px 0 12px;
@@ -208,6 +209,10 @@ textarea {
   font-size: 16px;
   background: white;
   font-family: inherit;
+}
+
+select {
+  cursor: pointer;
 }
 
 textarea {
@@ -313,18 +318,17 @@ textarea {
 }
 
 .ingredient-row {
-  display: flex;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: 1.2fr .9fr 1fr 38px;
+  gap: 7px;
   margin-bottom: 9px;
   align-items: center;
 }
 
-.ingredient-row input:first-child {
-  flex: 1.3;
-}
-
-.ingredient-row input:nth-child(2) {
-  flex: 1;
+.ingredient-row input,
+.ingredient-row select {
+  margin: 0;
+  min-width: 0;
 }
 
 .step-row {
@@ -463,10 +467,22 @@ button.recipe-delete {
 .view-only-ingredient {
   padding: 8px 0;
   border-bottom: 1px solid #f1e3da;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 .view-only-ingredient:last-child {
   border-bottom: 0;
+}
+
+.view-only-ingredient-left {
+  flex: 1;
+}
+
+.view-only-ingredient-amount {
+  color: #8a573d;
+  white-space: nowrap;
 }
 
 .view-only-step {
@@ -500,6 +516,40 @@ button.recipe-delete {
   padding: 10px 0;
 }
 
+.ingredient-category-label {
+  font-size: 13px;
+  font-weight: bold;
+  color: #9a5e3d;
+  background: #fff0e5;
+  border-radius: 9px;
+  padding: 5px 8px;
+  margin-bottom: 7px;
+  display: inline-block;
+}
+
+.ingredient-group {
+  margin-bottom: 16px;
+}
+
+.ingredient-group:last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 600px) {
+
+  .ingredient-row {
+    grid-template-columns: 1fr 1fr 1fr 38px;
+    gap: 5px;
+  }
+
+  .ingredient-row input,
+  .ingredient-row select {
+    font-size: 14px;
+    padding: 10px 7px;
+  }
+
+}
+
 @media (max-width: 420px) {
 
   .food-icon {
@@ -507,11 +557,25 @@ button.recipe-delete {
   }
 
   .ingredient-row {
+    grid-template-columns: 1fr 1fr;
     gap: 5px;
   }
 
-  .ingredient-row input {
-    min-width: 0;
+  .ingredient-row .ingredient-name {
+    grid-column: 1 / 2;
+  }
+
+  .ingredient-row .ingredient-amount {
+    grid-column: 2 / 3;
+  }
+
+  .ingredient-row .ingredient-category {
+    grid-column: 1 / 2;
+  }
+
+  .ingredient-row .small-delete {
+    grid-column: 2 / 3;
+    justify-self: end;
   }
 
 }
@@ -574,7 +638,7 @@ button.recipe-delete {
     class="search-box"
     type="search"
     placeholder="🔍 搜索食物，例如：鸡、汤、意大利面"
-    oninput="searchFoods">
+    oninput="searchFoods()">
 
   <div id="foodList">
 
@@ -682,7 +746,8 @@ button.recipe-delete {
     <div class="notice">
 
       📖 新增的食谱会独立保存在「刘太食谱」里。<br>
-      🍽️ 不会影响「食物」列表。
+      🍽️ 不会影响「食物」列表。<br>
+      🥕 材料可以自己分类，查看时会自动分组。
 
     </div>
 
@@ -718,6 +783,30 @@ button.recipe-delete {
         <input
           class="ingredient-amount"
           placeholder="分量，例如：2片">
+
+        <select class="ingredient-category">
+
+          <option value="主材料">
+            🍖 主材料
+          </option>
+
+          <option value="配料">
+            🥬 配料
+          </option>
+
+          <option value="调味料">
+            🧂 调味料
+          </option>
+
+          <option value="酱汁">
+            🥣 酱汁
+          </option>
+
+          <option value="其他">
+            ✨ 其他
+          </option>
+
+        </select>
 
         <button
           type="button"
@@ -848,7 +937,7 @@ let recipeEditMode = false;
 
 
 /* =====================================================
-   分类
+   食物分类
 ===================================================== */
 
 const categories = [
@@ -868,6 +957,40 @@ const categories = [
   { name: "甜点", icon: "🍰" },
   { name: "早餐", icon: "🍳" },
   { name: "其他", icon: "🍽️" }
+
+];
+
+
+/* =====================================================
+   ⭐ 材料分类
+===================================================== */
+
+const ingredientCategories = [
+
+  {
+    name: "主材料",
+    icon: "🍖"
+  },
+
+  {
+    name: "配料",
+    icon: "🥬"
+  },
+
+  {
+    name: "调味料",
+    icon: "🧂"
+  },
+
+  {
+    name: "酱汁",
+    icon: "🥣"
+  },
+
+  {
+    name: "其他",
+    icon: "✨"
+  }
 
 ];
 
@@ -995,6 +1118,42 @@ function getCategoryIcon(category) {
 }
 
 
+function getIngredientCategoryIcon(category) {
+
+  const found =
+    ingredientCategories.find(function(item) {
+
+      return item.name === category;
+
+    });
+
+  return found
+    ? found.icon
+    : "✨";
+
+}
+
+
+function getIngredientCategoryName(category) {
+
+  if (!category) {
+    return "其他";
+  }
+
+  const found =
+    ingredientCategories.find(function(item) {
+
+      return item.name === category;
+
+    });
+
+  return found
+    ? found.name
+    : "其他";
+
+}
+
+
 /* =====================================================
    食物分类
 ===================================================== */
@@ -1103,6 +1262,41 @@ function selectRecipeCategory(category) {
     category;
 
   renderRecipeCategoryOptions();
+
+}
+
+
+/* =====================================================
+   材料分类 HTML
+===================================================== */
+
+function ingredientCategoryOptions(selected) {
+
+  const current =
+    getIngredientCategoryName(selected);
+
+
+  return ingredientCategories.map(function(category) {
+
+    const isSelected =
+      category.name === current
+        ? "selected"
+        : "";
+
+
+    return `
+
+      <option
+        value="${escapeHTML(category.name)}"
+        ${isSelected}>
+
+        ${category.icon} ${escapeHTML(category.name)}
+
+      </option>
+
+    `;
+
+  }).join("");
 
 }
 
@@ -1861,13 +2055,6 @@ async function loadTodayOrders() {
 
     if (!response.ok) {
 
-      console.error(
-        "Orders error:",
-        response.status,
-        text
-      );
-
-
       box.innerHTML = `
 
         <div class="empty">
@@ -1910,13 +2097,6 @@ async function loadTodayOrders() {
     }
 
     catch (jsonError) {
-
-      console.error(
-        "Orders JSON error:",
-        jsonError,
-        text
-      );
-
 
       box.innerHTML = `
 
@@ -1999,9 +2179,6 @@ async function loadTodayOrders() {
   }
 
   catch (error) {
-
-    console.error(error);
-
 
     box.innerHTML = `
 
@@ -2491,7 +2668,7 @@ function searchRecipes() {
 
 
 /* =====================================================
-   新增食谱材料
+   ⭐ 新增食谱材料
 ===================================================== */
 
 function addNewIngredientRow() {
@@ -2522,6 +2699,12 @@ function addNewIngredientRow() {
       <input
         class="ingredient-amount"
         placeholder="分量，例如：2块">
+
+      <select class="ingredient-category">
+
+        ${ingredientCategoryOptions("主材料")}
+
+      </select>
 
       <button
         type="button"
@@ -2649,7 +2832,7 @@ function refreshNewStepNumbers() {
 
 
 /* =====================================================
-   新增食谱
+   ⭐ 新增食谱
 ===================================================== */
 
 async function addRecipe() {
@@ -2698,27 +2881,57 @@ async function addRecipe() {
   ingredientRows.forEach(
     function(row) {
 
-      const name =
+      const nameInput =
         row.querySelector(
           ".ingredient-name"
-        ).value.trim();
+        );
+
+
+      const amountInput =
+        row.querySelector(
+          ".ingredient-amount"
+        );
+
+
+      const categorySelect =
+        row.querySelector(
+          ".ingredient-category"
+        );
+
+
+      const ingredientName =
+        nameInput
+          ? nameInput.value.trim()
+          : "";
 
 
       const amount =
-        row.querySelector(
-          ".ingredient-amount"
-        ).value.trim();
+        amountInput
+          ? amountInput.value.trim()
+          : "";
 
 
-      if (name || amount) {
+      const category =
+        categorySelect
+          ? categorySelect.value
+          : "其他";
+
+
+      if (
+        ingredientName ||
+        amount
+      ) {
 
         ingredients.push({
 
           name:
-            name,
+            ingredientName,
 
           amount:
-            amount
+            amount,
+
+          category:
+            category
 
         });
 
@@ -2945,6 +3158,12 @@ function resetNewRecipeForm() {
           class="ingredient-amount"
           placeholder="分量，例如：2片">
 
+        <select class="ingredient-category">
+
+          ${ingredientCategoryOptions("主材料")}
+
+        </select>
+
         <button
           type="button"
           class="small-delete"
@@ -3001,7 +3220,6 @@ function resetNewRecipeForm() {
 
 /* =====================================================
    打开食谱
-   ⭐ 现在默认是「只能查看」
 ===================================================== */
 
 function openRecipe(id) {
@@ -3050,7 +3268,7 @@ function openRecipe(id) {
 
 
 /* =====================================================
-   ⭐ 开始编辑食谱
+   开始编辑
 ===================================================== */
 
 function editRecipe() {
@@ -3070,7 +3288,7 @@ function editRecipe() {
 
 
 /* =====================================================
-   ⭐ 取消编辑
+   取消编辑
 ===================================================== */
 
 function cancelRecipeEdit() {
@@ -3234,7 +3452,9 @@ function parseIngredients(recipe) {
       )
     ) {
 
-      return recipe.ingredients;
+      return normalizeIngredients(
+        recipe.ingredients
+      );
 
     }
 
@@ -3246,7 +3466,7 @@ function parseIngredients(recipe) {
 
 
     return Array.isArray(data)
-      ? data
+      ? normalizeIngredients(data)
       : [];
 
   }
@@ -3256,6 +3476,64 @@ function parseIngredients(recipe) {
     return [];
 
   }
+
+}
+
+
+/* =====================================================
+   ⭐ 材料资料标准化
+   兼容旧食谱
+===================================================== */
+
+function normalizeIngredients(items) {
+
+  if (!Array.isArray(items)) {
+    return [];
+  }
+
+
+  return items.map(function(item) {
+
+    if (typeof item === "string") {
+
+      return {
+
+        name:
+          item,
+
+        amount:
+          "",
+
+        category:
+          "其他"
+
+      };
+
+    }
+
+
+    return {
+
+      name:
+        item && item.name
+          ? item.name
+          : "",
+
+      amount:
+        item && item.amount
+          ? item.amount
+          : "",
+
+      category:
+        item && item.category
+          ? getIngredientCategoryName(
+              item.category
+            )
+          : "其他"
+
+    };
+
+  });
 
 }
 
@@ -3336,9 +3614,161 @@ function normalizeRecipeLink(link) {
 
 
 /* =====================================================
+   ⭐ 材料分组
+===================================================== */
+
+function groupIngredients(ingredients) {
+
+  const groups = {};
+
+
+  ingredientCategories.forEach(
+    function(category) {
+
+      groups[category.name] = [];
+
+    }
+  );
+
+
+  ingredients.forEach(
+    function(item) {
+
+      const category =
+        getIngredientCategoryName(
+          item.category
+        );
+
+
+      if (!groups[category]) {
+
+        groups[category] = [];
+
+      }
+
+
+      groups[category].push(
+        item
+      );
+
+    }
+  );
+
+
+  return groups;
+
+}
+
+
+/* =====================================================
+   ⭐ 显示材料分类
+===================================================== */
+
+function renderIngredientsView(ingredients) {
+
+  if (!ingredients.length) {
+
+    return `
+
+      <div class="view-only-empty">
+        暂时没有材料
+      </div>
+
+    `;
+
+  }
+
+
+  const groups =
+    groupIngredients(
+      ingredients
+    );
+
+
+  let html = "";
+
+
+  ingredientCategories.forEach(
+    function(category) {
+
+      const items =
+        groups[category.name];
+
+
+      if (!items || !items.length) {
+        return;
+      }
+
+
+      html += `
+
+        <div class="ingredient-group">
+
+          <div class="ingredient-category-label">
+
+            ${category.icon}
+
+            ${escapeHTML(category.name)}
+
+          </div>
+
+          ${
+            items.map(
+              function(item) {
+
+                return `
+
+                  <div class="view-only-ingredient">
+
+                    <div class="view-only-ingredient-left">
+
+                      <strong>
+                        ${escapeHTML(
+                          item.name || ""
+                        )}
+                      </strong>
+
+                    </div>
+
+                    ${
+                      item.amount
+                        ? `
+
+                          <div class="view-only-ingredient-amount">
+
+                            ${escapeHTML(
+                              item.amount
+                            )}
+
+                          </div>
+
+                        `
+                        : ""
+                    }
+
+                  </div>
+
+                `;
+
+              }
+            ).join("")
+          }
+
+        </div>
+
+      `;
+
+    }
+  );
+
+
+  return html;
+
+}
+
+
+/* =====================================================
    ⭐ 显示食谱详情
-   查看模式：只能看
-   编辑模式：可以修改
 ===================================================== */
 
 function renderRecipeDetail() {
@@ -3446,53 +3876,9 @@ function renderRecipeDetail() {
 
         <div class="view-only-box">
 
-          ${
-            ingredients.length
-
-              ? ingredients.map(
-                  function(item) {
-
-                    const name =
-                      typeof item === "string"
-                        ? item
-                        : (item.name || "");
-
-                    const amount =
-                      typeof item === "string"
-                        ? ""
-                        : (item.amount || "");
-
-                    return `
-
-                      <div class="view-only-ingredient">
-
-                        <strong>
-                          ${escapeHTML(name)}
-                        </strong>
-
-                        ${
-                          amount
-                            ? "　" +
-                              escapeHTML(amount)
-                            : ""
-                        }
-
-                      </div>
-
-                    `;
-
-                  }
-                ).join("")
-
-              : `
-
-                <div class="view-only-empty">
-                  暂时没有材料
-                </div>
-
-              `
-
-          }
+          ${renderIngredientsView(
+            ingredients
+          )}
 
         </div>
 
@@ -3623,7 +4009,8 @@ function renderRecipeDetail() {
             : ingredientEditorHTML(
                 {
                   name: "",
-                  amount: ""
+                  amount: "",
+                  category: "主材料"
                 },
                 0
               )
@@ -3724,7 +4111,7 @@ function renderRecipeDetail() {
 
 
 /* =====================================================
-   材料编辑
+   ⭐ 材料编辑
 ===================================================== */
 
 function ingredientEditorHTML(item) {
@@ -3741,6 +4128,14 @@ function ingredientEditorHTML(item) {
       : (item.amount || "");
 
 
+  const category =
+    typeof item === "string"
+      ? "其他"
+      : getIngredientCategoryName(
+          item.category
+        );
+
+
   return `
 
     <div class="ingredient-row">
@@ -3754,6 +4149,12 @@ function ingredientEditorHTML(item) {
         class="ingredient-amount"
         placeholder="分量，例如：2块"
         value="${escapeHTML(amount)}">
+
+      <select class="ingredient-category">
+
+        ${ingredientCategoryOptions(category)}
+
+      </select>
 
       <button
         type="button"
@@ -3797,7 +4198,9 @@ function addIngredientRow() {
 
       name: "",
 
-      amount: ""
+      amount: "",
+
+      category: "主材料"
 
     });
 
@@ -3931,7 +4334,7 @@ function refreshStepNumbers() {
 
 
 /* =====================================================
-   保存食谱
+   ⭐ 保存食谱
 ===================================================== */
 
 async function saveRecipeDetail() {
@@ -3953,16 +4356,40 @@ async function saveRecipeDetail() {
   ingredientRows.forEach(
     function(row) {
 
-      const name =
+      const nameInput =
         row.querySelector(
           ".ingredient-name"
-        ).value.trim();
+        );
+
+
+      const amountInput =
+        row.querySelector(
+          ".ingredient-amount"
+        );
+
+
+      const categorySelect =
+        row.querySelector(
+          ".ingredient-category"
+        );
+
+
+      const name =
+        nameInput
+          ? nameInput.value.trim()
+          : "";
 
 
       const amount =
-        row.querySelector(
-          ".ingredient-amount"
-        ).value.trim();
+        amountInput
+          ? amountInput.value.trim()
+          : "";
+
+
+      const category =
+        categorySelect
+          ? categorySelect.value
+          : "其他";
 
 
       if (name || amount) {
@@ -3973,7 +4400,10 @@ async function saveRecipeDetail() {
             name,
 
           amount:
-            amount
+            amount,
+
+          category:
+            category
 
         });
 
