@@ -28,6 +28,94 @@ body {
     sans-serif;
 }
 
+/* =====================================================
+   🔒 网页密码锁
+===================================================== */
+
+.password-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: #fff8f2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.password-screen.hidden {
+  display: none !important;
+}
+
+.password-card {
+  width: 100%;
+  max-width: 380px;
+  background: white;
+  border-radius: 24px;
+  padding: 30px 24px;
+  box-shadow: 0 5px 25px rgba(0,0,0,.08);
+}
+
+.password-lock {
+  text-align: center;
+  font-size: 52px;
+  margin-bottom: 8px;
+}
+
+.password-card h1 {
+  text-align: center;
+  margin: 0;
+  font-size: 28px;
+  color: #3d2b24;
+}
+
+.password-card p {
+  text-align: center;
+  color: #987d70;
+  margin: 10px 0 20px;
+}
+
+.password-card input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid #ead8cc;
+  border-radius: 14px;
+  font-size: 18px;
+  text-align: center;
+  outline: none;
+  margin: 0 0 12px;
+  background: white;
+}
+
+.password-card input:focus {
+  border-color: #e69765;
+  box-shadow: 0 0 0 3px rgba(230,151,101,.12);
+}
+
+.password-card button {
+  width: 100%;
+  border: 0;
+  background: #e69765;
+  color: white;
+  padding: 14px;
+  border-radius: 14px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.password-error {
+  text-align: center;
+  color: #d65c4a;
+  font-size: 14px;
+  min-height: 20px;
+  margin-top: 10px;
+}
+
+/* =====================================================
+   HEADER
+===================================================== */
+
 header {
   background: #f4c4a4;
   text-align: center;
@@ -586,6 +674,50 @@ button.recipe-delete {
 
 <body>
 
+<!-- =====================================================
+     🔒 密码页面
+===================================================== -->
+
+<div id="passwordScreen" class="password-screen">
+
+  <div class="password-card">
+
+    <div class="password-lock">
+      🔒
+    </div>
+
+    <h1>
+      刘太厨房
+    </h1>
+
+    <p>
+      请输入密码才能进入 ❤️
+    </p>
+
+    <input
+      id="sitePassword"
+      type="password"
+      autocomplete="current-password"
+      placeholder="请输入密码"
+      onkeydown="if(event.key==='Enter') unlockKitchen()">
+
+    <button
+      onclick="unlockKitchen()">
+
+      进入厨房 ❤️
+
+    </button>
+
+    <div
+      id="passwordError"
+      class="password-error">
+    </div>
+
+  </div>
+
+</div>
+
+
 <header>
 
   <h1>🍳 刘太厨房</h1>
@@ -913,6 +1045,110 @@ button.recipe-delete {
 <script>
 
 /* =====================================================
+   🔒 网页密码
+===================================================== */
+
+const SITE_PASSWORD = "1218LV";
+
+let siteUnlocked = false;
+
+
+function unlockKitchen() {
+
+  const input =
+    document.getElementById(
+      "sitePassword"
+    );
+
+  const error =
+    document.getElementById(
+      "passwordError"
+    );
+
+  const password =
+    input
+      ? input.value
+      : "";
+
+
+  if (
+    password ===
+    SITE_PASSWORD
+  ) {
+
+    siteUnlocked = true;
+
+    sessionStorage.setItem(
+      "liutai_kitchen_unlocked",
+      "yes"
+    );
+
+
+    const screen =
+      document.getElementById(
+        "passwordScreen"
+      );
+
+
+    if (screen) {
+
+      screen.classList.add(
+        "hidden"
+      );
+
+    }
+
+
+    if (error) {
+
+      error.textContent = "";
+
+    }
+
+
+    if (input) {
+
+      input.value = "";
+
+    }
+
+
+    renderCategoryOptions();
+
+    renderRecipeCategoryOptions();
+
+    loadFoods();
+
+    loadRecipes();
+
+    loadTodayOrders();
+
+  }
+
+  else {
+
+    if (error) {
+
+      error.textContent =
+        "密码错误 ❌";
+
+    }
+
+
+    if (input) {
+
+      input.value = "";
+
+      input.focus();
+
+    }
+
+  }
+
+}
+
+
+/* =====================================================
    SUPABASE
 ===================================================== */
 
@@ -962,7 +1198,7 @@ const categories = [
 
 
 /* =====================================================
-   ⭐ 材料分类
+   材料分类
 ===================================================== */
 
 const ingredientCategories = [
@@ -1306,6 +1542,9 @@ function ingredientCategoryOptions(selected) {
 ===================================================== */
 
 async function loadFoods() {
+
+  if (!siteUnlocked) return;
+
 
   const box =
     document.getElementById(
@@ -2010,6 +2249,9 @@ async function orderFood(id, person) {
 
 async function loadTodayOrders() {
 
+  if (!siteUnlocked) return;
+
+
   const box =
     document.getElementById(
       "todayList"
@@ -2336,6 +2578,9 @@ function renderToday(orders) {
 ===================================================== */
 
 async function loadRecipes() {
+
+  if (!siteUnlocked) return;
+
 
   const box =
     document.getElementById(
@@ -2668,7 +2913,7 @@ function searchRecipes() {
 
 
 /* =====================================================
-   ⭐ 新增食谱材料
+   新增食谱材料
 ===================================================== */
 
 function addNewIngredientRow() {
@@ -2832,7 +3077,7 @@ function refreshNewStepNumbers() {
 
 
 /* =====================================================
-   ⭐ 新增食谱
+   新增食谱
 ===================================================== */
 
 async function addRecipe() {
@@ -3481,8 +3726,7 @@ function parseIngredients(recipe) {
 
 
 /* =====================================================
-   ⭐ 材料资料标准化
-   兼容旧食谱
+   材料资料标准化
 ===================================================== */
 
 function normalizeIngredients(items) {
@@ -3614,7 +3858,7 @@ function normalizeRecipeLink(link) {
 
 
 /* =====================================================
-   ⭐ 材料分组
+   材料分组
 ===================================================== */
 
 function groupIngredients(ingredients) {
@@ -3661,7 +3905,7 @@ function groupIngredients(ingredients) {
 
 
 /* =====================================================
-   ⭐ 显示材料分类
+   显示材料分类
 ===================================================== */
 
 function renderIngredientsView(ingredients) {
@@ -3768,7 +4012,7 @@ function renderIngredientsView(ingredients) {
 
 
 /* =====================================================
-   ⭐ 显示食谱详情
+   显示食谱详情
 ===================================================== */
 
 function renderRecipeDetail() {
@@ -3807,9 +4051,7 @@ function renderRecipeDetail() {
     );
 
 
-  /* =================================================
-     👀 查看模式
-  ================================================= */
+  /* 查看模式 */
 
   if (!recipeEditMode) {
 
@@ -3951,9 +4193,7 @@ function renderRecipeDetail() {
   }
 
 
-  /* =================================================
-     ✏️ 编辑模式
-  ================================================= */
+  /* 编辑模式 */
 
   box.innerHTML = `
 
@@ -4111,7 +4351,7 @@ function renderRecipeDetail() {
 
 
 /* =====================================================
-   ⭐ 材料编辑
+   材料编辑
 ===================================================== */
 
 function ingredientEditorHTML(item) {
@@ -4334,7 +4574,7 @@ function refreshStepNumbers() {
 
 
 /* =====================================================
-   ⭐ 保存食谱
+   保存食谱
 ===================================================== */
 
 async function saveRecipeDetail() {
@@ -4728,6 +4968,11 @@ async function removeOrder(id) {
 
 function showPage(page, button) {
 
+  if (!siteUnlocked) {
+    return;
+  }
+
+
   const pages = [
 
     "foods",
@@ -4883,15 +5128,66 @@ document.addEventListener(
   "DOMContentLoaded",
   function() {
 
-    renderCategoryOptions();
+    const unlocked =
+      sessionStorage.getItem(
+        "liutai_kitchen_unlocked"
+      ) === "yes";
 
-    renderRecipeCategoryOptions();
 
-    loadFoods();
+    if (unlocked) {
 
-    loadRecipes();
+      siteUnlocked = true;
 
-    loadTodayOrders();
+
+      const screen =
+        document.getElementById(
+          "passwordScreen"
+        );
+
+
+      if (screen) {
+
+        screen.classList.add(
+          "hidden"
+        );
+
+      }
+
+
+      renderCategoryOptions();
+
+      renderRecipeCategoryOptions();
+
+      loadFoods();
+
+      loadRecipes();
+
+      loadTodayOrders();
+
+    }
+
+    else {
+
+      const input =
+        document.getElementById(
+          "sitePassword"
+        );
+
+
+      if (input) {
+
+        setTimeout(
+          function() {
+
+            input.focus();
+
+          },
+          100
+        );
+
+      }
+
+    }
 
   }
 );
@@ -4906,6 +5202,7 @@ document.addEventListener(
   function() {
 
     if (
+      siteUnlocked &&
       document.visibilityState ===
       "visible"
     ) {
@@ -4925,7 +5222,11 @@ document.addEventListener(
 setInterval(
   function() {
 
-    loadTodayOrders();
+    if (siteUnlocked) {
+
+      loadTodayOrders();
+
+    }
 
   },
   20000
