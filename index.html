@@ -131,16 +131,30 @@ header p {
   margin: 8px 0 0;
 }
 
+
+/* =====================================================
+   📱 手机导航修复
+   让第一个「🍽️ 食物」永远从左边开始显示
+===================================================== */
+
 nav {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 8px;
   padding: 15px;
   background: white;
   overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+nav::-webkit-scrollbar {
+  display: none;
 }
 
 nav button {
+  flex: 0 0 auto;
   border: 0;
   border-radius: 20px;
   padding: 10px 15px;
@@ -5237,4 +5251,3 @@ setInterval(
 </body>
 
 </html>
-
