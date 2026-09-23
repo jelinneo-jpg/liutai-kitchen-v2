@@ -12,8 +12,8 @@
 <title>刘太厨房</title>
 
 <!-- OPPO / Android 主屏幕图标 -->
-<link rel="icon" type="image/jpeg" href="kitchen-icon.jpg">
-<link rel="apple-touch-icon" href="kitchen-icon.jpg">
+<link rel="icon" type="image/jpeg" href="kitchen-icon.png">
+<link rel="apple-touch-icon" href="kitchen-icon.png">
 
 <style>
 
@@ -60,15 +60,13 @@ body {
   box-shadow: 0 5px 25px rgba(0,0,0,.08);
 }
 
-
-.password-photo {
+.password-login-image {
+  display: block;
   width: 100%;
   max-width: 300px;
-  aspect-ratio: 1 / 1;
-  object-fit: cover;
-  display: block;
+  height: auto;
   margin: 0 auto 18px;
-  border-radius: 22px;
+  border-radius: 18px;
 }
 
 .password-lock {
@@ -711,7 +709,10 @@ button.recipe-delete {
 
   <div class="password-card">
 
-    <img class="password-photo" src="kitchen-icon.png" alt="刘太厨房">
+    <img
+      class="password-login-image"
+      src="kitchen-login.png"
+      alt="刘太厨房">
 
     <div class="password-lock">
       🔒
