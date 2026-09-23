@@ -11,6 +11,10 @@
 
 <title>刘太厨房</title>
 
+<!-- OPPO / Android 主屏幕图标 -->
+<link rel="icon" type="image/jpeg" href="kitchen-icon.jpg">
+<link rel="apple-touch-icon" href="kitchen-icon.jpg">
+
 <style>
 
 * {
@@ -54,6 +58,17 @@ body {
   border-radius: 24px;
   padding: 30px 24px;
   box-shadow: 0 5px 25px rgba(0,0,0,.08);
+}
+
+
+.password-photo {
+  width: 100%;
+  max-width: 300px;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  display: block;
+  margin: 0 auto 18px;
+  border-radius: 22px;
 }
 
 .password-lock {
@@ -696,6 +711,8 @@ button.recipe-delete {
 
   <div class="password-card">
 
+    <img class="password-photo" src="kitchen-icon.png" alt="刘太厨房">
+
     <div class="password-lock">
       🔒
     </div>
@@ -762,11 +779,6 @@ button.recipe-delete {
   <button
     onclick="showPage('cookbook', this)">
     📖 食谱
-  </button>
-
-  <button
-    onclick="showPage('addRecipe', this)">
-    ➕ 添加食谱
   </button>
 
   <button
@@ -876,6 +888,13 @@ button.recipe-delete {
     type="search"
     placeholder="🔍 搜索食谱，例如：鸡扒、汤、蛋糕"
     oninput="searchRecipes()">
+
+  <button
+    class="save-recipe"
+    style="margin-bottom:15px;"
+    onclick="showPage('addRecipe', null)">
+    ➕ 添加食谱
+  </button>
 
   <div id="cookbookList">
 
