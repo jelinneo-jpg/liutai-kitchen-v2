@@ -765,8 +765,8 @@ button.recipe-delete {
   </button>
 
   <button
-    onclick="showPage('addRecipe', this)">
-    ➕ 添加食谱
+    onclick="showPage('backup', this)">
+    💾 资料备份
   </button>
 
 </nav>
@@ -871,6 +871,13 @@ button.recipe-delete {
     type="search"
     placeholder="🔍 搜索食谱，例如：鸡扒、汤、蛋糕"
     oninput="searchRecipes()">
+
+  <button
+    class="save-recipe"
+    style="margin-bottom:15px;"
+    onclick="showPage('addRecipe', null)">
+    ➕ 添加食谱
+  </button>
 
   <div id="cookbookList">
 
@@ -1032,6 +1039,37 @@ button.recipe-delete {
       💾 保存新食谱 ❤️
 
     </button>
+
+  </div>
+
+</section>
+
+
+
+<section id="backup" class="hidden">
+
+  <h2>💾 资料备份</h2>
+
+  <div class="card">
+
+    <div class="notice">
+      📤「导出资料」会把食物、食谱和点菜记录保存成一个 JSON 备份文件。<br><br>
+      📥「导入资料」会先清除目前数据库里的这三类资料，再用备份文件恢复。导入前会再次要求确认。
+    </div>
+
+    <button
+      class="save-recipe"
+      onclick="exportKitchenData()">
+      📤 导出资料
+    </button>
+
+    <br><br>
+
+    <input
+      id="importKitchenFile"
+      type="file"
+      accept=".json,application/json"
+      onchange="importKitchenData(this)">
 
   </div>
 
@@ -4976,6 +5014,419 @@ async function removeOrder(id) {
 }
 
 
+
+/* =====================================================
+   导出 / 导入资料
+===================================================== */
+
+async function getAllKitchenTableData(tableName) {
+
+  const response =
+    await supabaseFetch(
+      "/" + tableName + "?select=*",
+      {
+        method: "GET",
+        headers: {
+          "Accept": "application/json"
+        }
+      }
+    );
+
+  const text =
+    await response.text();
+
+  if (!response.ok) {
+    throw new Error(
+      tableName + " 读取失败：\n" + text
+    );
+  }
+
+  return text
+    ? JSON.parse(text)
+    : [];
+
+}
+
+
+async function exportKitchenData() {
+
+  try {
+
+    const results =
+      await Promise.all([
+        getAllKitchenTableData("family_foods"),
+        getAllKitchenTableData("family_recipes"),
+        getAllKitchenTableData("family_orders")
+      ]);
+
+
+    const backup = {
+
+      app:
+        "刘太厨房",
+
+      exported_at:
+        new Date().toISOString(),
+
+      family_foods:
+        results[0],
+
+      family_recipes:
+        results[1],
+
+      family_orders:
+        results[2]
+
+    };
+
+
+    const blob =
+      new Blob(
+        [
+          JSON.stringify(
+            backup,
+            null,
+            2
+          )
+        ],
+        {
+          type:
+            "application/json;charset=utf-8"
+        }
+      );
+
+
+    const url =
+      URL.createObjectURL(blob);
+
+
+    const link =
+      document.createElement("a");
+
+
+    const now =
+      new Date();
+
+
+    const dateText =
+      new Intl.DateTimeFormat(
+        "en-CA",
+        {
+          timeZone:
+            "Asia/Singapore",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit"
+        }
+      ).format(now);
+
+
+    link.href =
+      url;
+
+    link.download =
+      "刘太厨房备份_" +
+      dateText +
+      ".json";
+
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    link.remove();
+
+    URL.revokeObjectURL(url);
+
+
+    alert(
+      "资料导出成功 ❤️\n\n请保存好这个 JSON 备份文件。"
+    );
+
+  }
+
+  catch (error) {
+
+    alert(
+      "导出失败 😢\n\n" +
+      (error.message || error)
+    );
+
+  }
+
+}
+
+
+function cleanImportedRows(rows) {
+
+  if (!Array.isArray(rows)) {
+    return [];
+  }
+
+
+  return rows.map(
+    function(row) {
+
+      const copy =
+        { ...row };
+
+
+      delete copy.id;
+
+      delete copy.created_at;
+
+      delete copy.updated_at;
+
+
+      return copy;
+
+    }
+  );
+
+}
+
+
+async function deleteKitchenTableRows(tableName) {
+
+  const current =
+    await getAllKitchenTableData(
+      tableName
+    );
+
+
+  for (const row of current) {
+
+    if (
+      row.id === undefined ||
+      row.id === null
+    ) {
+      continue;
+    }
+
+
+    const response =
+      await supabaseFetch(
+
+        "/" +
+        tableName +
+        "?id=eq." +
+        encodeURIComponent(
+          row.id
+        ),
+
+        {
+          method: "DELETE",
+          headers: {
+            "Prefer":
+              "return=minimal"
+          }
+        }
+
+      );
+
+
+    const text =
+      await response.text();
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        tableName +
+        " 清除旧资料失败：\n" +
+        text
+      );
+
+    }
+
+  }
+
+}
+
+
+async function insertKitchenRows(
+  tableName,
+  rows
+) {
+
+  const cleanRows =
+    cleanImportedRows(rows);
+
+
+  if (!cleanRows.length) {
+    return;
+  }
+
+
+  const response =
+    await supabaseFetch(
+
+      "/" + tableName,
+
+      {
+
+        method: "POST",
+
+        headers: {
+
+          "Content-Type":
+            "application/json",
+
+          "Prefer":
+            "return=minimal"
+
+        },
+
+        body:
+          JSON.stringify(
+            cleanRows
+          )
+
+      }
+
+    );
+
+
+  const text =
+    await response.text();
+
+
+  if (!response.ok) {
+
+    throw new Error(
+      tableName +
+      " 导入失败：\n" +
+      text
+    );
+
+  }
+
+}
+
+
+async function importKitchenData(input) {
+
+  const file =
+    input &&
+    input.files
+      ? input.files[0]
+      : null;
+
+
+  if (!file) {
+    return;
+  }
+
+
+  try {
+
+    const text =
+      await file.text();
+
+
+    const backup =
+      JSON.parse(text);
+
+
+    if (
+      !backup ||
+      !Array.isArray(
+        backup.family_foods
+      ) ||
+      !Array.isArray(
+        backup.family_recipes
+      ) ||
+      !Array.isArray(
+        backup.family_orders
+      )
+    ) {
+
+      throw new Error(
+        "这个文件不是有效的「刘太厨房」备份文件。"
+      );
+
+    }
+
+
+    const confirmed =
+      confirm(
+        "确定要导入这个备份吗？\n\n" +
+        "目前数据库里的食物、食谱和点菜记录会被备份文件取代。\n\n" +
+        "建议先按「导出资料」保存目前资料。"
+      );
+
+
+    if (!confirmed) {
+
+      input.value = "";
+
+      return;
+
+    }
+
+
+    await deleteKitchenTableRows(
+      "family_orders"
+    );
+
+    await deleteKitchenTableRows(
+      "family_recipes"
+    );
+
+    await deleteKitchenTableRows(
+      "family_foods"
+    );
+
+
+    await insertKitchenRows(
+      "family_foods",
+      backup.family_foods
+    );
+
+    await insertKitchenRows(
+      "family_recipes",
+      backup.family_recipes
+    );
+
+    await insertKitchenRows(
+      "family_orders",
+      backup.family_orders
+    );
+
+
+    await loadFoods();
+
+    await loadRecipes();
+
+    await loadTodayOrders();
+
+
+    alert(
+      "资料导入成功 ❤️"
+    );
+
+  }
+
+  catch (error) {
+
+    alert(
+      "导入失败 😢\n\n" +
+      (error.message || error)
+    );
+
+  }
+
+  finally {
+
+    if (input) {
+      input.value = "";
+    }
+
+  }
+
+}
+
+
 /* =====================================================
    页面切换
 ===================================================== */
@@ -4994,6 +5445,7 @@ function showPage(page, button) {
     "today",
     "cookbook",
     "addRecipe",
+    "backup",
     "recipeDetail"
 
   ];
