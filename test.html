@@ -138,18 +138,20 @@ header.kitchen-header{
   overflow:hidden;
 }
 .kitchen-header-inner{
-  width:min(100%,520px);
+  width:min(100%,560px);
   display:grid;
-  grid-template-columns:minmax(72px,1fr) auto minmax(72px,1fr);
-  align-items:end;
+  grid-template-columns:92px auto 92px;
+  align-items:center;
+  justify-content:center;
   justify-items:center;
-  column-gap:4px;
+  column-gap:12px;
+  transform:translateX(-14px);
 }
 .kitchen-header-bear{
-  width:108px;
-  height:98px;
-  object-fit:cover;
-  object-position:center 28%;
+  width:64px;
+  height:64px;
+  object-fit:contain;
+  object-position:center;
   border-radius:18px;
 }
 .kitchen-header-bear.left{ justify-self:end; }
@@ -174,10 +176,11 @@ header.kitchen-header{
 @media (max-width:420px){
   header.kitchen-header{ min-height:108px; padding:8px 52px 7px; }
   .kitchen-header-inner{
-    grid-template-columns:minmax(60px,1fr) auto minmax(60px,1fr);
-    column-gap:2px;
+    grid-template-columns:76px auto 76px;
+    column-gap:8px;
+    transform:translateX(-10px);
   }
-  .kitchen-header-bear{ width:88px; height:88px; }
+  .kitchen-header-bear{ width:58px; height:58px; }
   .kitchen-header-title h1{ font-size:24px; }
   .kitchen-header-title p{ font-size:13px; }
   .kitchen-header .logout-button{ right:7px; padding:6px 9px; }
