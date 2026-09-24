@@ -1278,10 +1278,17 @@ nav { position: sticky; top: var(--header-h); z-index: 999; }
 
     <br><br>
 
+    <button
+      class="save-recipe"
+      onclick="document.getElementById('importKitchenFile').click()">
+      📂 导入 / 恢复资料
+    </button>
+
     <input
       id="importKitchenFile"
       type="file"
       accept=".json,application/json"
+      style="display:none;"
       onchange="importKitchenData(this)">
 
   </div>
