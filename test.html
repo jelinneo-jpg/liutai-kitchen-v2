@@ -132,16 +132,35 @@ body {
 header {
   background: #f4c4a4;
   text-align: center;
-  padding: 28px 20px;
+  padding: 5px 64px 5px;
+  position: relative;
 }
 
 header h1 {
   margin: 0;
-  font-size: 30px;
+  font-size: 21px;
+  line-height: 1.08;
 }
 
 header p {
-  margin: 8px 0 0;
+  margin: 2px 0 0;
+  font-size: 10px;
+  line-height: 1.05;
+}
+
+.logout-button {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 14px;
+  padding: 6px 10px;
+  background: rgba(255,255,255,.72);
+  color: #8a573d;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
 }
 
 
@@ -914,6 +933,8 @@ nav { position: sticky; top: var(--header-h); z-index: 999; }
 
   <p>一家人的点菜 ❤️</p>
 
+  <button class="logout-button" type="button" onclick="logoutKitchen()">退出</button>
+
 </header>
 
 
@@ -1049,14 +1070,14 @@ nav { position: sticky; top: var(--header-h); z-index: 999; }
     type="search"
     placeholder="🔍 搜索食谱，例如：鸡扒、汤、蛋糕"
     oninput="searchRecipes()">
-  </div>
 
   <button
     class="save-recipe"
-    style="margin-bottom:15px;"
+    style="margin-bottom:10px;"
     onclick="showPage('addRecipe', null)">
     ➕ 添加食谱
   </button>
+  </div>
 
   <div class="compact-browser">
     <div id="recipeCategoryFilter" class="compact-categories"></div>
@@ -1375,6 +1396,24 @@ function unlockKitchen() {
 
   }
 
+}
+
+
+function logoutKitchen() {
+  sessionStorage.removeItem("liutai_kitchen_unlocked");
+  siteUnlocked = false;
+
+  const screen = document.getElementById("passwordScreen");
+  const input = document.getElementById("sitePassword");
+  const error = document.getElementById("passwordError");
+
+  if (screen) screen.classList.remove("hidden");
+  if (input) {
+    input.value = "";
+    setTimeout(function(){ input.focus(); }, 50);
+  }
+  if (error) error.textContent = "";
+  window.scrollTo(0, 0);
 }
 
 
