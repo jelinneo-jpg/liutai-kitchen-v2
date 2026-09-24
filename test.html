@@ -1270,6 +1270,10 @@ nav { position: sticky; top: var(--header-h); z-index: 999; }
       📥「导入资料」会先清除目前数据库里的这三类资料，再用备份文件恢复。导入前会再次要求确认。
     </div>
 
+    <div id="lastExportTime" class="notice" style="background:#fff8e8;">
+      上次导出备份：尚未导出
+    </div>
+
     <button
       class="save-recipe"
       onclick="exportKitchenData()">
@@ -1278,10 +1282,17 @@ nav { position: sticky; top: var(--header-h); z-index: 999; }
 
     <br><br>
 
+    <button
+      class="save-recipe"
+      onclick="document.getElementById('importKitchenFile').click()">
+      📂 导入 / 恢复资料
+    </button>
+
     <input
       id="importKitchenFile"
       type="file"
       accept=".json,application/json"
+      style="display:none;"
       onchange="importKitchenData(this)">
 
   </div>
@@ -1476,7 +1487,7 @@ const categories = [
   { name: "意大利面", icon: "🍝" },
   { name: "汤", icon: "🍲" },
   { name: "点心", icon: "🥟" },
-  { name: "甜点", icon: "🍰" },
+  { name: "点心/甜点", icon: "🍰" },
   { name: "早餐", icon: "🍳" },
   { name: "其他", icon: "🍽️" }
 
@@ -3749,6 +3760,70 @@ function openRecipe(id) {
 
 
 /* =====================================================
+   从食谱加入食物
+===================================================== */
+
+async function addCurrentRecipeToFoods() {
+
+  if (!currentRecipe) return;
+
+  const recipeName = String(currentRecipe.name || "").trim();
+  const recipeCategory = currentRecipe.category || "其他";
+
+  if (!recipeName) {
+    alert("这个食谱没有名称 😢");
+    return;
+  }
+
+  const alreadyExists = foods.some(function(food) {
+    return String(food.name || "").trim().toLowerCase() === recipeName.toLowerCase();
+  });
+
+  if (alreadyExists) {
+    alert("这道菜已经在食物里面 ❤️");
+    return;
+  }
+
+  const confirmed = confirm(
+    "要把这道食谱加入食物吗？\n\n" +
+    recipeName + "\n分类：" + recipeCategory
+  );
+
+  if (!confirmed) return;
+
+  try {
+    const response = await supabaseFetch(
+      "/family_foods",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Prefer": "return=representation"
+        },
+        body: JSON.stringify({
+          name: recipeName,
+          category: recipeCategory
+        })
+      }
+    );
+
+    const text = await response.text();
+
+    if (!response.ok) {
+      alert("加入食物失败 😢\n\n" + text);
+      return;
+    }
+
+    await loadFoods();
+    alert(recipeName + "\n已经加入食物 ❤️");
+  }
+  catch (error) {
+    alert("加入食物失败 😢\n\n" + (error.message || ""));
+  }
+}
+
+
+/* =====================================================
    开始编辑
 ===================================================== */
 
@@ -4413,6 +4488,15 @@ function renderRecipeDetail() {
 
 
         <button
+          class="save-recipe"
+          style="margin-bottom:10px;"
+          onclick="addCurrentRecipeToFoods()">
+
+          🍽️ 加入食物
+
+        </button>
+
+        <button
           class="edit-recipe"
           onclick="editRecipe()">
 
@@ -4979,7 +5063,10 @@ async function saveRecipeDetail() {
 
             recipe_link:
               recipeLink ||
-              null
+              null,
+
+            category:
+              recipeCategory
 
           })
 
@@ -5244,6 +5331,45 @@ async function getAllKitchenTableData(tableName) {
 }
 
 
+
+function formatKitchenExportTime(date) {
+  return new Intl.DateTimeFormat(
+    "zh-CN",
+    {
+      timeZone: "Asia/Singapore",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false
+    }
+  ).format(date).replace(/\//g, "/");
+}
+
+function renderLastExportTime() {
+  const box = document.getElementById("lastExportTime");
+  if (!box) return;
+  const saved = localStorage.getItem("liutai_kitchen_last_export_time");
+  if (!saved) {
+    box.textContent = "上次导出备份：尚未导出";
+    return;
+  }
+  const date = new Date(saved);
+  if (isNaN(date.getTime())) {
+    box.textContent = "上次导出备份：尚未导出";
+    return;
+  }
+  box.textContent = "上次导出备份：" + formatKitchenExportTime(date);
+}
+
+function saveLastExportTime() {
+  const now = new Date();
+  localStorage.setItem("liutai_kitchen_last_export_time", now.toISOString());
+  renderLastExportTime();
+}
+
 async function exportKitchenData() {
 
   try {
@@ -5333,6 +5459,9 @@ async function exportKitchenData() {
     link.remove();
 
     URL.revokeObjectURL(url);
+
+
+    saveLastExportTime();
 
 
     alert(
@@ -5789,6 +5918,8 @@ function escapeHTML(text) {
 document.addEventListener(
   "DOMContentLoaded",
   function() {
+
+    renderLastExportTime();
 
     const unlocked =
       sessionStorage.getItem(
