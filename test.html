@@ -53,17 +53,18 @@ body {
 
 .password-card {
   width: 100%;
-  max-width: 380px;
+  max-width: 430px;
+  min-height: calc(100vh - 70px);
   background: white;
-  border-radius: 24px;
-  padding: 30px 24px;
+  border-radius: 32px;
+  padding: 70px 34px 42px;
   box-shadow: 0 5px 25px rgba(0,0,0,.08);
 }
 
 .password-login-image {
   display: block;
   width: 100%;
-  max-width: 300px;
+  max-width: 340px;
   height: auto;
   margin: 0 auto 18px;
   border-radius: 18px;
@@ -1482,14 +1483,10 @@ const categories = [
   { name: "鱼", icon: "🐟" },
   { name: "海鲜", icon: "🦐" },
   { name: "蔬菜", icon: "🥬" },
-  { name: "饭", icon: "🍚" },
   { name: "面食", icon: "🍜" },
-  { name: "意大利面", icon: "🍝" },
   { name: "汤", icon: "🍲" },
-  { name: "点心", icon: "🥟" },
   { name: "点心/甜点", icon: "🍰" },
-  { name: "早餐", icon: "🍳" },
-  { name: "其他", icon: "🍽️" }
+  { name: "饭/其他", icon: "🍚" }
 
 ];
 
@@ -3043,32 +3040,19 @@ function searchRecipes() {
       "recipeSearch"
     );
 
-
   if (!input) return;
-
 
   const keyword =
     input.value
       .trim()
       .toLowerCase();
 
-
+  /* 搜索时参考「食物」页面：
+     直接从全部食谱搜索，不受左边当前分类限制 */
   if (!keyword) {
-
-    let categoryRecipes = recipes;
-
-    if (recipeListCategory !== "全部") {
-      categoryRecipes = recipes.filter(function(recipe) {
-        return recipe.category === recipeListCategory;
-      });
-    }
-
-    renderCookbook(categoryRecipes);
-
+    renderCookbook();
     return;
-
   }
-
 
   const filtered =
     recipes.filter(function(recipe) {
@@ -3078,81 +3062,77 @@ function searchRecipes() {
           recipe.name || ""
         ).toLowerCase();
 
-
       const category =
         String(
           recipe.category || ""
         ).toLowerCase();
-
 
       const ingredients =
         String(
           recipe.ingredients || ""
         ).toLowerCase();
 
-
       const instructions =
         String(
           recipe.instructions || ""
         ).toLowerCase();
 
-
-      const keywordMatch = (
-
+      return (
         name.includes(keyword) ||
-
         category.includes(keyword) ||
-
         ingredients.includes(keyword) ||
-
         instructions.includes(keyword)
-
       );
-
-      return keywordMatch;
 
     });
 
+  /* 搜索结果直接显示全部匹配项目，
+     不再经过当前左边分类的二次过滤 */
+  renderCookbookSearchResults(filtered, keyword);
+}
+
+function renderCookbookSearchResults(filtered, keyword) {
 
   const box =
     document.getElementById(
       "cookbookList"
     );
 
+  if (!box) return;
 
   if (!filtered.length) {
 
     box.innerHTML = `
-
       <div class="empty">
-
         😢 找不到「${escapeHTML(keyword)}」
-
       </div>
-
     `;
 
     return;
-
   }
 
-
   box.innerHTML = `
+    <div class="compact-browser">
+      <div class="compact-categories">
+        ${compactCategoryButtonsHTML(
+          typeof activeRecipeCategory !== "undefined"
+            ? activeRecipeCategory
+            : "全部",
+          "recipe"
+        )}
+      </div>
 
-    <div class="search-result-count">
+      <div class="compact-list">
+        <div class="search-result-count">
+          找到 ${filtered.length} 道食谱 ❤️
+        </div>
 
-      找到 ${filtered.length} 个食谱 ❤️
-
+        ${filtered.map(function(recipe) {
+          return recipeCardHTML(recipe);
+        }).join("")}
+      </div>
     </div>
-
-    ${filtered.map(function(recipe) {
-
-      return recipeCardHTML(recipe);
-
-    }).join("")}
-
   `;
-
 }
 
 
