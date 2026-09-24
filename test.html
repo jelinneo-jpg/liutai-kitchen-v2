@@ -810,6 +810,36 @@ nav { position: sticky; top: var(--header-h); z-index: 999; }
 .compact-actions .view-recipe { background:#fff0e5; color:#9a5e3d; flex:1; }
 .compact-actions .compact-delete { background:#f1eeee; color:#8a4d3b; width:36px; flex:0 0 36px; }
 
+/* v3：分类与菜品区域各自独立滚动，避免整个长分类栏拖着页面滑 */
+#foods .compact-browser,
+#cookbook .compact-browser {
+  height: calc(100dvh - var(--header-h) - var(--nav-h) - var(--tools-h) - 18px);
+  min-height: 220px;
+  overflow: hidden;
+}
+
+#foods .compact-categories,
+#cookbook .compact-categories {
+  position: static;
+  top: auto;
+  height: 100%;
+  max-height: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+
+#foods .compact-list,
+#cookbook .compact-list {
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  padding-bottom: 24px;
+}
+
 @media (max-width: 420px) {
   main { padding: 12px; }
   .compact-browser { grid-template-columns: 78px minmax(0,1fr); gap:8px; }
@@ -1390,9 +1420,11 @@ const categories = [
   { name: "蔬菜", icon: "🥬" },
   { name: "饭", icon: "🍚" },
   { name: "面食", icon: "🍜" },
+  { name: "意大利面", icon: "🍝" },
   { name: "汤", icon: "🍲" },
   { name: "点心", icon: "🥟" },
   { name: "甜点", icon: "🍰" },
+  { name: "早餐", icon: "🍳" },
   { name: "其他", icon: "🍽️" }
 
 ];
