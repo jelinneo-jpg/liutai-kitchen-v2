@@ -1482,12 +1482,10 @@ const categories = [
   { name: "鱼", icon: "🐟" },
   { name: "海鲜", icon: "🦐" },
   { name: "蔬菜", icon: "🥬" },
-  { name: "饭", icon: "🍚" },
   { name: "面食", icon: "🍜" },
   { name: "汤", icon: "🍲" },
-  { name: "点心", icon: "🥟" },
   { name: "点心/甜点", icon: "🍰" },
-  { name: "其他", icon: "🍽️" }
+  { name: "饭/其他", icon: "🍚" }
 
 ];
 
@@ -3758,6 +3756,70 @@ function openRecipe(id) {
 
 
 /* =====================================================
+   从食谱加入食物
+===================================================== */
+
+async function addCurrentRecipeToFoods() {
+
+  if (!currentRecipe) return;
+
+  const recipeName = String(currentRecipe.name || "").trim();
+  const recipeCategory = currentRecipe.category || "其他";
+
+  if (!recipeName) {
+    alert("这个食谱没有名称 😢");
+    return;
+  }
+
+  const alreadyExists = foods.some(function(food) {
+    return String(food.name || "").trim().toLowerCase() === recipeName.toLowerCase();
+  });
+
+  if (alreadyExists) {
+    alert("这道菜已经在食物里面 ❤️");
+    return;
+  }
+
+  const confirmed = confirm(
+    "要把这道食谱加入食物吗？\n\n" +
+    recipeName + "\n分类：" + recipeCategory
+  );
+
+  if (!confirmed) return;
+
+  try {
+    const response = await supabaseFetch(
+      "/family_foods",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Prefer": "return=representation"
+        },
+        body: JSON.stringify({
+          name: recipeName,
+          category: recipeCategory
+        })
+      }
+    );
+
+    const text = await response.text();
+
+    if (!response.ok) {
+      alert("加入食物失败 😢\n\n" + text);
+      return;
+    }
+
+    await loadFoods();
+    alert(recipeName + "\n已经加入食物 ❤️");
+  }
+  catch (error) {
+    alert("加入食物失败 😢\n\n" + (error.message || ""));
+  }
+}
+
+
+/* =====================================================
    开始编辑
 ===================================================== */
 
@@ -4420,6 +4482,15 @@ function renderRecipeDetail() {
 
         </div>
 
+
+        <button
+          class="save-recipe"
+          style="margin-bottom:10px;"
+          onclick="addCurrentRecipeToFoods()">
+
+          🍽️ 加入食物
+
+        </button>
 
         <button
           class="edit-recipe"
