@@ -695,6 +695,120 @@ button.recipe-delete {
 
 }
 
+
+/* =====================================================
+   紧凑分类列表（食物 / 食谱）
+===================================================== */
+.compact-browser {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+.compact-categories {
+  position: sticky;
+  top: 8px;
+  background: white;
+  border-radius: 18px;
+  padding: 8px;
+  box-shadow: 0 3px 12px rgba(0,0,0,.05);
+  max-height: 72vh;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.compact-categories::-webkit-scrollbar { display:none; }
+.compact-category-btn {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: #6f5549;
+  border-radius: 12px;
+  padding: 10px 4px;
+  margin: 1px 0;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1.25;
+}
+.compact-category-btn.active {
+  background: #fff0e5;
+  color: #c96f43;
+  font-weight: bold;
+  box-shadow: inset 0 0 0 1px #e69765;
+}
+.compact-list { min-width: 0; }
+.compact-card {
+  background: white;
+  border-radius: 18px;
+  padding: 11px;
+  margin-bottom: 10px;
+  box-shadow: 0 3px 12px rgba(0,0,0,.05);
+}
+.compact-card-main {
+  display: grid;
+  grid-template-columns: 64px minmax(0,1fr);
+  gap: 11px;
+  align-items: center;
+}
+.compact-icon-box {
+  width: 64px;
+  height: 64px;
+  border-radius: 15px;
+  background: #fff3ea;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34px;
+}
+.compact-info { min-width:0; }
+.compact-name {
+  margin: 0 0 5px;
+  font-size: 17px;
+  line-height: 1.25;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.compact-tag {
+  display: inline-block;
+  background: #fff0e5;
+  color: #9a5e3d;
+  padding: 4px 8px;
+  border-radius: 9px;
+  font-size: 12px;
+  margin-bottom: 7px;
+}
+.compact-actions {
+  display: flex;
+  gap: 6px;
+}
+.compact-actions button {
+  border: 0;
+  border-radius: 10px;
+  padding: 8px 7px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  min-width: 0;
+}
+.compact-actions .pick-me { background:#e69765; color:white; flex:1; }
+.compact-actions .pick-husband { background:#d58b68; color:white; flex:1; }
+.compact-actions .view-recipe { background:#fff0e5; color:#9a5e3d; flex:1; }
+.compact-actions .compact-delete { background:#f1eeee; color:#8a4d3b; width:36px; flex:0 0 36px; }
+
+@media (max-width: 420px) {
+  main { padding: 12px; }
+  .compact-browser { grid-template-columns: 78px minmax(0,1fr); gap:8px; }
+  .compact-categories { padding:6px; border-radius:15px; }
+  .compact-category-btn { font-size:12px; padding:9px 2px; }
+  .compact-card { padding:9px; border-radius:15px; margin-bottom:8px; }
+  .compact-card-main { grid-template-columns: 54px minmax(0,1fr); gap:9px; }
+  .compact-icon-box { width:54px; height:54px; border-radius:13px; font-size:29px; }
+  .compact-name { font-size:15px; margin-bottom:4px; }
+  .compact-tag { font-size:11px; padding:3px 7px; margin-bottom:5px; }
+  .compact-actions button { font-size:11px; padding:7px 5px; }
+}
+
 </style>
 
 </head>
@@ -804,12 +918,11 @@ button.recipe-delete {
     placeholder="🔍 搜索食物，例如：鸡、汤、意大利面"
     oninput="searchFoods()">
 
-  <div id="foodList">
-
-    <div class="loading">
-      正在读取食物……
+  <div class="compact-browser">
+    <div id="foodCategoryFilter" class="compact-categories"></div>
+    <div id="foodList" class="compact-list">
+      <div class="loading">正在读取食物……</div>
     </div>
-
   </div>
 
 </section>
@@ -897,12 +1010,11 @@ button.recipe-delete {
     ➕ 添加食谱
   </button>
 
-  <div id="cookbookList">
-
-    <div class="loading">
-      正在读取食谱……
+  <div class="compact-browser">
+    <div id="recipeCategoryFilter" class="compact-categories"></div>
+    <div id="cookbookList" class="compact-list">
+      <div class="loading">正在读取食谱……</div>
     </div>
-
   </div>
 
 </section>
@@ -1240,6 +1352,9 @@ let selectedRecipeCategory = "";
 let currentRecipe = null;
 
 let recipeEditMode = false;
+
+let foodListCategory = "全部";
+let recipeListCategory = "全部";
 
 
 /* =====================================================
@@ -1608,6 +1723,38 @@ function ingredientCategoryOptions(selected) {
 
 
 /* =====================================================
+   食物 / 食谱列表分类筛选
+===================================================== */
+function renderListCategoryFilters() {
+  const foodBox = document.getElementById("foodCategoryFilter");
+  const recipeBox = document.getElementById("recipeCategoryFilter");
+  const items = [{name:"全部", icon:"🍽️"}].concat(categories);
+
+  if (foodBox) {
+    foodBox.innerHTML = items.map(function(item) {
+      return `<button type="button" class="compact-category-btn ${foodListCategory === item.name ? "active" : ""}" onclick="filterFoodCategory('${escapeHTML(item.name)}')">${item.icon}<br>${escapeHTML(item.name)}</button>`;
+    }).join("");
+  }
+  if (recipeBox) {
+    recipeBox.innerHTML = items.map(function(item) {
+      return `<button type="button" class="compact-category-btn ${recipeListCategory === item.name ? "active" : ""}" onclick="filterRecipeCategory('${escapeHTML(item.name)}')">${item.icon}<br>${escapeHTML(item.name)}</button>`;
+    }).join("");
+  }
+}
+
+function filterFoodCategory(category) {
+  foodListCategory = category;
+  renderListCategoryFilters();
+  searchFoods();
+}
+
+function filterRecipeCategory(category) {
+  recipeListCategory = category;
+  renderListCategoryFilters();
+  searchRecipes();
+}
+
+/* =====================================================
    读取食物
 ===================================================== */
 
@@ -1730,10 +1877,16 @@ function renderFoods(list) {
   if (!box) return;
 
 
-  const data =
+  let data =
     Array.isArray(list)
       ? list
       : foods;
+
+  if (foodListCategory !== "全部") {
+    data = data.filter(function(food) { return food.category === foodListCategory; });
+  }
+
+  renderListCategoryFilters();
 
 
   if (!data.length) {
@@ -1758,77 +1911,25 @@ function renderFoods(list) {
 
 
 function foodCardHTML(food) {
-
-  const icon =
-    getCategoryIcon(
-      food.category
-    );
-
-
-  const id =
-    escapeHTML(
-      String(food.id)
-    );
-
+  const icon = getCategoryIcon(food.category);
+  const id = escapeHTML(String(food.id));
 
   return `
-
-    <div class="card">
-
-      <div class="food-icon">
-        ${icon}
+    <div class="compact-card">
+      <div class="compact-card-main">
+        <div class="compact-icon-box">${icon}</div>
+        <div class="compact-info">
+          <h3 class="compact-name">${escapeHTML(food.name || "未命名食物")}</h3>
+          <span class="compact-tag">${icon} ${escapeHTML(food.category || "其他")}</span>
+          <div class="compact-actions">
+            <button class="pick-me" onclick="orderFood('${id}', '我')">❤️ 我点</button>
+            <button class="pick-husband" onclick="orderFood('${id}', '老公')">❤️ 老公点</button>
+            <button class="compact-delete" onclick="deleteFood('${id}')" title="删除">🗑️</button>
+          </div>
+        </div>
       </div>
-
-      <h2 class="food-name">
-        ${escapeHTML(
-          food.name || "未命名食物"
-        )}
-      </h2>
-
-      <span class="tag">
-
-        ${icon}
-
-        ${escapeHTML(
-          food.category || "其他"
-        )}
-
-      </span>
-
-      <div class="action-row">
-
-        <button
-          class="action"
-          onclick="orderFood('${id}', '我')">
-
-          ❤️ 我点
-
-        </button>
-
-        <button
-          class="action husband"
-          onclick="orderFood('${id}', '老公')">
-
-          ❤️ 老公点
-
-        </button>
-
-      </div>
-
-      <br>
-
-      <button
-        class="delete"
-        onclick="deleteFood('${id}')">
-
-        🗑️ 删除食物
-
-      </button>
-
     </div>
-
   `;
-
 }
 
 
@@ -1876,10 +1977,12 @@ function searchFoods() {
         ).toLowerCase();
 
 
-      return (
+      const keywordMatch = (
         name.includes(keyword) ||
         category.includes(keyword)
       );
+      const categoryMatch = foodListCategory === "全部" || food.category === foodListCategory;
+      return keywordMatch && categoryMatch;
 
     });
 
@@ -2797,74 +2900,24 @@ function renderCookbook(list) {
 
 
 function recipeCardHTML(recipe) {
-
-  const icon =
-    getCategoryIcon(
-      recipe.category
-    );
-
-
-  const id =
-    escapeHTML(
-      String(recipe.id)
-    );
-
+  const icon = getCategoryIcon(recipe.category);
+  const id = escapeHTML(String(recipe.id));
 
   return `
-
-    <div class="card recipe-list-card">
-
-      <div
-        onclick="openRecipe('${id}')">
-
-        <div class="food-icon">
-          ${icon}
+    <div class="compact-card recipe-list-card">
+      <div class="compact-card-main">
+        <div class="compact-icon-box" onclick="openRecipe('${id}')">${icon}</div>
+        <div class="compact-info">
+          <h3 class="compact-name" onclick="openRecipe('${id}')">${escapeHTML(recipe.name || "未命名食谱")}</h3>
+          <span class="compact-tag">${icon} ${escapeHTML(recipe.category || "其他")}</span>
+          <div class="compact-actions">
+            <button class="view-recipe" onclick="openRecipe('${id}')">📖 查看食谱</button>
+            <button class="compact-delete" onclick="deleteRecipe('${id}')" title="删除">🗑️</button>
+          </div>
         </div>
-
-        <h2 class="food-name">
-
-          ${escapeHTML(
-            recipe.name ||
-            "未命名食谱"
-          )}
-
-        </h2>
-
-        <span class="tag">
-
-          ${icon}
-
-          ${escapeHTML(
-            recipe.category ||
-            "其他"
-          )}
-
-        </span>
-
       </div>
-
-
-      <button
-        class="recipe-button"
-        onclick="openRecipe('${id}')">
-
-        📖 查看食谱
-
-      </button>
-
-
-      <button
-        class="delete"
-        onclick="deleteRecipe('${id}')">
-
-        🗑️ 删除食谱
-
-      </button>
-
     </div>
-
   `;
-
 }
 
 
@@ -2925,7 +2978,7 @@ function searchRecipes() {
         ).toLowerCase();
 
 
-      return (
+      const keywordMatch = (
 
         name.includes(keyword) ||
 
@@ -2936,6 +2989,10 @@ function searchRecipes() {
         instructions.includes(keyword)
 
       );
+
+      const categoryMatch = recipeListCategory === "全部" || recipe.category === recipeListCategory;
+
+      return keywordMatch && categoryMatch;
 
     });
 
