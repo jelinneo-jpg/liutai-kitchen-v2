@@ -1954,12 +1954,16 @@ function filterFoodCategory(category) {
   foodListCategory = category;
   renderListCategoryFilters();
   searchFoods();
+  const foodList = document.getElementById("foodList");
+  if (foodList) foodList.scrollTop = 0;
 }
 
 function filterRecipeCategory(category) {
   recipeListCategory = category;
   renderListCategoryFilters();
   searchRecipes();
+  const cookbookList = document.getElementById("cookbookList");
+  if (cookbookList) cookbookList.scrollTop = 0;
 }
 
 /* =====================================================
