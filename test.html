@@ -696,6 +696,20 @@ button.recipe-delete {
 }
 
 
+/* 固定顶部：刘太厨房、导航、食物/食谱标题和搜索框 */
+:root { --header-h: 0px; --nav-h: 0px; --tools-h: 0px; }
+header { position: sticky; top: 0; z-index: 1000; }
+nav { position: sticky; top: var(--header-h); z-index: 999; }
+.list-sticky-tools {
+  position: sticky;
+  top: calc(var(--header-h) + var(--nav-h));
+  z-index: 998;
+  background: #fff8f2;
+  padding-top: 2px;
+  padding-bottom: 1px;
+}
+.list-sticky-tools h2 { margin-top: 0; margin-bottom: 8px; }
+.list-sticky-tools .search-box { margin-bottom: 10px; }
 /* =====================================================
    紧凑分类列表（食物 / 食谱）
 ===================================================== */
@@ -707,7 +721,7 @@ button.recipe-delete {
 }
 .compact-categories {
   position: sticky;
-  top: 8px;
+  top: calc(var(--header-h) + var(--nav-h) + var(--tools-h) + 8px);
   background: white;
   border-radius: 18px;
   padding: 8px;
@@ -909,6 +923,7 @@ button.recipe-delete {
 
 <section id="foods">
 
+  <div class="list-sticky-tools">
   <h2>🍽️ 刘太食物</h2>
 
   <input
@@ -917,6 +932,7 @@ button.recipe-delete {
     type="search"
     placeholder="🔍 搜索食物，例如：鸡、汤、意大利面"
     oninput="searchFoods()">
+  </div>
 
   <div class="compact-browser">
     <div id="foodCategoryFilter" class="compact-categories"></div>
@@ -994,6 +1010,7 @@ button.recipe-delete {
 
 <section id="cookbook" class="hidden">
 
+  <div class="list-sticky-tools">
   <h2>📖 刘太食谱</h2>
 
   <input
@@ -1002,6 +1019,7 @@ button.recipe-delete {
     type="search"
     placeholder="🔍 搜索食谱，例如：鸡扒、汤、蛋糕"
     oninput="searchRecipes()">
+  </div>
 
   <button
     class="save-recipe"
@@ -1981,8 +1999,7 @@ function searchFoods() {
         name.includes(keyword) ||
         category.includes(keyword)
       );
-      const categoryMatch = foodListCategory === "全部" || food.category === foodListCategory;
-      return keywordMatch && categoryMatch;
+      return keywordMatch;
 
     });
 
@@ -2990,9 +3007,7 @@ function searchRecipes() {
 
       );
 
-      const categoryMatch = recipeListCategory === "全部" || recipe.category === recipeListCategory;
-
-      return keywordMatch && categoryMatch;
+      return keywordMatch;
 
     });
 
@@ -5773,6 +5788,23 @@ setInterval(
   20000
 );
 
+
+/* 自动计算固定顶部高度，避免互相遮住 */
+function updateStickyHeights() {
+  const headerEl = document.querySelector("header");
+  const navEl = document.querySelector("nav");
+  const activeSection = Array.from(document.querySelectorAll("#foods, #cookbook")).find(function(el){ return !el.classList.contains("hidden"); });
+  const toolsEl = activeSection ? activeSection.querySelector(".list-sticky-tools") : null;
+  document.documentElement.style.setProperty("--header-h", (headerEl ? headerEl.offsetHeight : 0) + "px");
+  document.documentElement.style.setProperty("--nav-h", (navEl ? navEl.offsetHeight : 0) + "px");
+  document.documentElement.style.setProperty("--tools-h", (toolsEl ? toolsEl.offsetHeight : 0) + "px");
+}
+window.addEventListener("resize", updateStickyHeights);
+window.addEventListener("load", updateStickyHeights);
+setTimeout(updateStickyHeights, 100);
+
+const stickyObserver = new MutationObserver(function(){ setTimeout(updateStickyHeights, 0); });
+document.querySelectorAll("#foods, #cookbook").forEach(function(el){ stickyObserver.observe(el, {attributes:true, attributeFilter:["class"]}); });
 </script>
 
 </body>
