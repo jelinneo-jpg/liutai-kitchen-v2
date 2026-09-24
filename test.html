@@ -130,8 +130,8 @@ body {
 
 /* ===== 刘太厨房新顶部 ===== */
 header.kitchen-header{
-  min-height:88px;
-  padding:4px 62px 3px;
+  min-height:78px;
+  padding:2px 62px 1px;
   display:flex;
   align-items:flex-end;
   justify-content:center;
@@ -174,7 +174,7 @@ header.kitchen-header{
   line-height:1.15;
 }
 @media (max-width:420px){
-  header.kitchen-header{ min-height:82px; padding:3px 52px 2px; }
+  header.kitchen-header{ min-height:74px; padding:1px 52px 1px; }
   .kitchen-header-inner{
     grid-template-columns:76px auto 76px;
     column-gap:8px;
@@ -947,6 +947,27 @@ nav { position: sticky; top: var(--header-h); z-index: 999; }
   .compact-actions button { font-size:11px; padding:7px 5px; }
 }
 
+</style>
+
+
+<style>
+/* 微调：顶部导航四个按钮文字稍小 */
+nav button,
+nav .nav-btn,
+.tabs button,
+.tabbar button,
+.top-tabs button{
+  font-size:14px !important;
+}
+@media (max-width:420px){
+  nav button,
+  nav .nav-btn,
+  .tabs button,
+  .tabbar button,
+  .top-tabs button{
+    font-size:13px !important;
+  }
+}
 </style>
 
 </head>
