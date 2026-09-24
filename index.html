@@ -3108,19 +3108,16 @@ function renderCookbook(list) {
       "cookbookList"
     );
 
-
   if (!box) return;
-
 
   let data =
     Array.isArray(list)
       ? list
       : recipes;
 
-  // 食谱分类：只显示当前选择的分类
   if (recipeListCategory !== "全部") {
     data = data.filter(function(recipe) {
-      return String(recipe.category || "").trim() === recipeListCategory;
+      return recipe.category === recipeListCategory;
     });
   }
 
@@ -3145,7 +3142,6 @@ function renderCookbook(list) {
     return;
 
   }
-
 
   box.innerHTML =
 
@@ -3186,66 +3182,89 @@ function recipeCardHTML(recipe) {
 
 function searchRecipes() {
 
-  const input = document.getElementById("recipeSearch");
+  const input =
+    document.getElementById(
+      "recipeSearch"
+    );
+
   if (!input) return;
 
-  const keyword = input.value.trim().toLowerCase();
+  const keyword =
+    input.value
+      .trim()
+      .toLowerCase();
 
-  // 先按照左边选择的食谱分类筛选
-  let base = recipes;
-  if (recipeListCategory !== "全部") {
-    base = base.filter(function(recipe) {
-      return String(recipe.category || "").trim() === recipeListCategory;
-    });
-  }
-
-  // 没有搜索字时，显示该分类全部食谱
   if (!keyword) {
+
     renderCookbook();
+
     return;
+
   }
 
-  // 搜索食谱名称、食谱分类、材料和做法
-  const filtered = base.filter(function(recipe) {
-    const name = String(recipe.name || "").toLowerCase();
-    const category = String(recipe.category || "").toLowerCase();
-    const ingredients = String(recipe.ingredients || "").toLowerCase();
-    const instructions = String(recipe.instructions || "").toLowerCase();
+  const filtered =
+    recipes.filter(function(recipe) {
 
-    return (
-      name.includes(keyword) ||
-      category.includes(keyword) ||
-      ingredients.includes(keyword) ||
-      instructions.includes(keyword)
+      const name =
+        String(
+          recipe.name || ""
+        ).toLowerCase();
+
+      const category =
+        String(
+          recipe.category || ""
+        ).toLowerCase();
+
+      const keywordMatch = (
+        name.includes(keyword) ||
+        category.includes(keyword)
+      );
+
+      return keywordMatch;
+
+    });
+
+  const box =
+    document.getElementById(
+      "cookbookList"
     );
-  });
-
-  renderCookbookSearchResults(filtered, keyword);
-}
-
-function renderCookbookSearchResults(filtered, keyword) {
-  const box = document.getElementById("cookbookList");
-  if (!box) return;
-
-  renderListCategoryFilters();
 
   if (!filtered.length) {
+
     box.innerHTML = `
+
       <div class="empty">
+
         😢 找不到「${escapeHTML(keyword)}」
+
+        <br><br>
+
+        试试看其他食谱名字或分类
+
       </div>
+
     `;
+
     return;
+
   }
 
   box.innerHTML = `
+
     <div class="search-result-count">
+
       找到 ${filtered.length} 道食谱 ❤️
+
     </div>
+
     ${filtered.map(function(recipe) {
+
       return recipeCardHTML(recipe);
+
     }).join("")}
+
   `;
+
 }
 
 
@@ -3616,7 +3635,10 @@ async function addRecipe() {
 
             recipe_link:
               recipeLink ||
-              null
+              null,
+
+            category:
+              recipeCategory
 
           })
 
