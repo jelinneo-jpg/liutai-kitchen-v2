@@ -2991,7 +2991,15 @@ function searchRecipes() {
 
   if (!keyword) {
 
-    renderCookbook();
+    let categoryRecipes = recipes;
+
+    if (recipeListCategory !== "全部") {
+      categoryRecipes = recipes.filter(function(recipe) {
+        return recipe.category === recipeListCategory;
+      });
+    }
+
+    renderCookbook(categoryRecipes);
 
     return;
 
@@ -3451,7 +3459,10 @@ async function addRecipe() {
 
             recipe_link:
               recipeLink ||
-              null
+              null,
+
+            category:
+              recipeCategory
 
           })
 
@@ -4383,16 +4394,16 @@ function renderRecipeDetail() {
 
       </div>
 
-      <div class="recipe-category">
+      <label class="form-label">
+        分类
+      </label>
 
-        ${icon}
-
-        ${escapeHTML(
-          currentRecipe.category ||
-          "其他"
-        )}
-
-      </div>
+      <select id="editRecipeCategory">
+        ${categories.map(function(category) {
+          const selected = category.name === (currentRecipe.category || "其他") ? "selected" : "";
+          return `<option value="${escapeHTML(category.name)}" ${selected}>${category.icon} ${escapeHTML(category.name)}</option>`;
+        }).join("")}
+      </select>
 
 
       <h3 class="recipe-section-title">
@@ -4863,6 +4874,18 @@ async function saveRecipeDetail() {
     recipeLinkInput
       ? recipeLinkInput.value.trim()
       : "";
+
+
+  const recipeCategorySelect =
+    document.getElementById(
+      "editRecipeCategory"
+    );
+
+
+  const recipeCategory =
+    recipeCategorySelect
+      ? recipeCategorySelect.value
+      : (currentRecipe.category || "其他");
 
 
   try {
