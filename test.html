@@ -970,6 +970,22 @@ nav .nav-btn,
 }
 </style>
 
+
+<style>
+/* iPhone：刘太食物进入时直接保持像轻轻下拉后的正常位置 */
+#foods{
+  padding-top: 18px !important;
+}
+#foods .list-sticky-tools{
+  margin-top: 0 !important;
+}
+@media (max-width:420px){
+  #foods{
+    padding-top: 18px !important;
+  }
+}
+</style>
+
 </head>
 
 <body>
@@ -6105,36 +6121,6 @@ setTimeout(updateStickyHeights, 100);
 
 const stickyObserver = new MutationObserver(function(){ setTimeout(updateStickyHeights, 0); });
 document.querySelectorAll("#foods, #cookbook").forEach(function(el){ stickyObserver.observe(el, {attributes:true, attributeFilter:["class"]}); });
-</script>
-
-
-<script>
-function resetKitchenTop(){
-  try{
-    window.scrollTo({top:0,left:0,behavior:"instant"});
-    document.documentElement.scrollTop=0;
-    document.body.scrollTop=0;
-    requestAnimationFrame(function(){
-      window.scrollTo(0,0);
-      document.documentElement.scrollTop=0;
-      document.body.scrollTop=0;
-    });
-    setTimeout(function(){
-      window.scrollTo(0,0);
-      document.documentElement.scrollTop=0;
-      document.body.scrollTop=0;
-    },80);
-  }catch(e){ window.scrollTo(0,0); }
-}
-</script>
-
-
-<script>
-window.addEventListener("pageshow", function(){
-  if(document.body && !document.body.classList.contains("locked")){
-    resetKitchenTop();
-  }
-});
 </script>
 
 </body>
