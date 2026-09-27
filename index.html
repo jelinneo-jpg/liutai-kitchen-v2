@@ -5953,6 +5953,23 @@ function restoreIngredient(id) {
   if(!(q>0)){alert("请输入正确的数量 ❤️");return;} x.qty=q; x.status="active"; delete x.finishedAt;
   saveTodayIngredientsAll(all); renderTodayIngredients();
 }
+function editTodayIngredient(id) {
+  const all=getTodayIngredientsAll().map(normalizeIngredient);
+  const x=all.find(v=>String(v.id)===String(id)); if(!x)return;
+  const name=prompt("编辑食材名称：", x.name); if(name===null)return;
+  const cleanName=name.trim(); if(!cleanName){alert("食材名称不能为空 ❤️");return;}
+  const qtyRaw=prompt(`编辑剩余数量（${x.unit}）：`, fmtQty(x.qty)); if(qtyRaw===null)return;
+  const qty=Number(qtyRaw); if(!(qty>=0)){alert("请输入正确的数量 ❤️");return;}
+  x.name=cleanName; x.qty=qty;
+  if(qty===0){x.status="done";x.finishedAt=new Date().toISOString();}else{x.status="active";delete x.finishedAt;}
+  saveTodayIngredientsAll(all); renderTodayIngredients();
+}
+function toggleIngredientSettings(id) {
+  const menu=document.getElementById("ingredientSettings-"+id);
+  if(!menu)return;
+  document.querySelectorAll(".ingredient-settings-menu").forEach(function(m){if(m!==menu)m.classList.add("hidden");});
+  menu.classList.toggle("hidden");
+}
 function deleteTodayIngredient(id) { saveTodayIngredientsAll(getTodayIngredientsAll().filter(x=>String(x.id)!==String(id))); renderTodayIngredients(); }
 function renderTodayIngredients() {
   const box=document.getElementById("todayIngredientList"); if(!box)return;
@@ -5961,8 +5978,9 @@ function renderTodayIngredients() {
   const active=all.filter(x=>x.status!=="done"&&x.qty>0).sort((a,b)=>Number(b.expiring)-Number(a.expiring));
   const done=all.filter(x=>x.status==="done"||x.qty<=0).sort((a,b)=>String(b.finishedAt||"").localeCompare(String(a.finishedAt||"")));
   const icons={"肉类":"🥩","鱼/海鲜":"🐟","蔬菜":"🥬","蛋/豆腐":"🥚","其他":"🍄"};
-  const activeHtml=active.length?active.map(x=>`<div class="compact-card"><div style="display:flex;align-items:center;gap:11px;"><div class="compact-icon-box">${icons[x.type]||"🍄"}</div><div style="flex:1;min-width:0;"><div style="font-weight:bold;font-size:16px;">${escapeHTML(x.name)}</div><div style="font-size:13px;color:#8a573d;margin-top:4px;">剩余：<b>${fmtQty(x.qty)} ${escapeHTML(x.unit)}</b>${x.expiring?' &nbsp;⚠️ 快过期':''}</div><div style="display:flex;gap:6px;margin-top:8px;"><button type="button" onclick="useIngredient('${x.id}')" style="border:0;border-radius:10px;padding:7px 9px;background:#e69765;color:white;font-weight:bold;cursor:pointer;">－ 用了</button><button type="button" onclick="restockIngredient('${x.id}')" style="border:0;border-radius:10px;padding:7px 9px;background:#fff0e5;color:#8a573d;font-weight:bold;cursor:pointer;">＋ 补货</button></div></div><button class="small-delete" onclick="deleteTodayIngredient('${x.id}')">🗑️</button></div></div>`).join(""):'<div class="empty">现在没有食材 😊<br>可以点击「➕ 添加食材」加入。</div>';
-  const doneHtml=done.length?done.map(x=>`<div class="compact-card" style="opacity:.72;"><div style="display:flex;align-items:center;gap:11px;"><div class="compact-icon-box">${icons[x.type]||"🍄"}</div><div style="flex:1;min-width:0;"><div style="font-weight:bold;font-size:15px;text-decoration:line-through;">${escapeHTML(x.name)}</div><div style="font-size:12px;color:#987d70;margin-top:4px;">已用完</div><button type="button" onclick="restoreIngredient('${x.id}')" style="border:0;border-radius:10px;padding:7px 10px;margin-top:7px;background:#fff0e5;color:#8a573d;font-weight:bold;cursor:pointer;">↩️ 恢复</button></div><button class="small-delete" onclick="deleteTodayIngredient('${x.id}')">🗑️</button></div></div>`).join(""):'<div style="color:#987d70;font-size:13px;padding:8px 2px 18px;">还没有已用完的食材</div>';
+  const gear=(x)=>`<div style="position:relative;flex:0 0 auto;align-self:flex-start;"><button type="button" onclick="toggleIngredientSettings('${x.id}')" aria-label="设置" style="border:0;background:#f6f1ed;color:#8a573d;width:34px;height:34px;border-radius:10px;font-size:17px;cursor:pointer;padding:0;">⚙️</button><div id="ingredientSettings-${x.id}" class="ingredient-settings-menu hidden" style="position:absolute;right:0;top:39px;z-index:20;background:white;border:1px solid #ead8cc;border-radius:12px;box-shadow:0 5px 18px rgba(0,0,0,.12);padding:5px;min-width:105px;"><button type="button" onclick="editTodayIngredient('${x.id}')" style="display:block;width:100%;border:0;background:white;padding:8px 9px;text-align:left;color:#6f5549;border-radius:8px;white-space:nowrap;">✏️ 编辑</button><button type="button" onclick="deleteTodayIngredient('${x.id}')" style="display:block;width:100%;border:0;background:white;padding:8px 9px;text-align:left;color:#a65343;border-radius:8px;white-space:nowrap;">🗑️ 删除</button></div></div>`;
+  const activeHtml=active.length?active.map(x=>`<div class="compact-card"><div style="display:flex;align-items:center;gap:10px;"><div class="compact-icon-box">${icons[x.type]||"🍄"}</div><div style="flex:1;min-width:0;"><div style="font-weight:bold;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHTML(x.name)}</div><div style="display:flex;align-items:center;gap:5px;margin-top:6px;white-space:nowrap;"><span style="font-size:12px;color:#8a573d;flex:1;min-width:0;">剩余：<b>${fmtQty(x.qty)} ${escapeHTML(x.unit)}</b>${x.expiring?' ⚠️':''}</span><button type="button" onclick="useIngredient('${x.id}')" style="border:0;border-radius:9px;padding:6px 7px;background:#e69765;color:white;font-size:12px;font-weight:bold;cursor:pointer;">－用了</button><button type="button" onclick="restockIngredient('${x.id}')" style="border:0;border-radius:9px;padding:6px 7px;background:#fff0e5;color:#8a573d;font-size:12px;font-weight:bold;cursor:pointer;">＋补货</button></div></div>${gear(x)}</div></div>`).join(""):'<div class="empty">现在没有食材 😊<br>可以点击「➕ 添加食材」加入。</div>';
+  const doneHtml=done.length?done.map(x=>`<div class="compact-card" style="opacity:.72;"><div style="display:flex;align-items:center;gap:10px;"><div class="compact-icon-box">${icons[x.type]||"🍄"}</div><div style="flex:1;min-width:0;"><div style="font-weight:bold;font-size:15px;text-decoration:line-through;">${escapeHTML(x.name)}</div><div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:5px;"><span style="font-size:12px;color:#987d70;">已用完</span><button type="button" onclick="restoreIngredient('${x.id}')" style="border:0;border-radius:9px;padding:6px 8px;background:#fff0e5;color:#8a573d;font-size:12px;font-weight:bold;cursor:pointer;">↩️ 恢复</button></div></div>${gear(x)}</div></div>`).join(""):'<div style="color:#987d70;font-size:13px;padding:8px 2px 18px;">还没有已用完的食材</div>';
   box.innerHTML=`<h3 style="margin:12px 0 10px;">🥬 现有食材</h3>${activeHtml}<h3 style="margin:22px 0 10px;">✅ 已用完</h3>${doneHtml}`;
 }
 
