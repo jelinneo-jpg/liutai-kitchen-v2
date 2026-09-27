@@ -1210,7 +1210,10 @@ nav .nav-btn,
 
 <section id="today" class="hidden">
 
-  <h2>📋 今日菜单</h2>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;">
+    <h2 style="margin:0;">📋 今日菜单</h2>
+    <button type="button" onclick="shareTodayMenuWhatsApp()" style="flex:0 0 auto;border:0;border-radius:12px;padding:7px 10px;background:#fff0e5;color:#8a573d;font-size:12px;font-weight:bold;cursor:pointer;">📤 发送菜单</button>
+  </div>
 
   <div class="card">
 
@@ -2228,8 +2231,39 @@ function renderChefRecommendations() {
   }
   box.innerHTML = list.map(function(item){
     const icon = getCategoryIcon(item.category);
-    return `<div style="display:flex;align-items:center;gap:9px;padding:9px 10px;margin-bottom:7px;background:#fff8f2;border-radius:13px;"><span style="font-size:24px;">${icon}</span><span style="font-weight:bold;flex:1;">${escapeHTML(item.name)}</span></div>`;
+    return `<div style="display:flex;align-items:center;gap:8px;padding:9px 10px;margin-bottom:7px;background:#fff8f2;border-radius:13px;">
+      <span style="font-size:21px;">${icon}</span>
+      <span style="font-weight:bold;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHTML(item.name)}</span>
+      <button type="button" onclick="removeChefRecommendation('${escapeHTML(String(item.id))}')" style="flex:0 0 auto;border:0;background:transparent;color:#9a5e3d;font-size:12px;font-weight:bold;padding:5px 3px;cursor:pointer;">取消</button>
+    </div>`;
   }).join("");
+}
+
+function removeChefRecommendation(id) {
+  const list = getChefRecommendations().filter(function(item){ return String(item.id) !== String(id); });
+  localStorage.setItem(CHEF_PICK_KEY, JSON.stringify(list));
+  chefPickSelected = new Set(list.map(function(item){ return String(item.id); }));
+  renderChefRecommendations();
+  if (chefPickMode) renderFoods();
+}
+
+function shareTodayMenuWhatsApp() {
+  const chefList = getChefRecommendations();
+  const todayRows = Array.from(document.querySelectorAll('#todayList [data-menu-name]'));
+  const lines = ['🍽️ 刘太厨房 · 今日菜单', ''];
+  lines.push('👩‍🍳 厨师推荐菜');
+  if (chefList.length) chefList.forEach(function(item){ lines.push('• ' + (item.name || '未命名食物')); });
+  else lines.push('• 暂无');
+  lines.push('', '❤️ 今日菜单');
+  if (todayRows.length) {
+    todayRows.forEach(function(row){
+      lines.push('• ' + (row.dataset.menuName || '未命名') + ' ❤️ ' + (row.dataset.orderedBy || '家人'));
+    });
+  } else {
+    lines.push('• 暂无');
+  }
+  const url = 'https://wa.me/?text=' + encodeURIComponent(lines.join('\n'));
+  window.open(url, '_blank');
 }
 
 function foodCardHTML(food) {
@@ -2979,95 +3013,18 @@ function renderToday(orders) {
 
 
   box.innerHTML = `
-
-    <div class="search-result-count">
-
-      今天共有 ${orders.length} 道点菜 ❤️
-
-    </div>
-
-    ${
-      orders.map(function(item) {
-
-        const icon =
-          getIconFromFoodName(
-            item.recipe_name
-          );
-
-
-        const time =
-          item.created_at
-
-            ? new Date(
-                item.created_at
-              ).toLocaleTimeString(
-                "zh-CN",
-                {
-                  timeZone:
-                    "Asia/Singapore",
-                  hour:
-                    "2-digit",
-                  minute:
-                    "2-digit"
-                }
-              )
-
-            : "";
-
-
-        return `
-
-          <div class="card">
-
-            <div class="food-icon">
-              ${icon}
-            </div>
-
-            <h2 class="food-name">
-
-              ${escapeHTML(
-                item.recipe_name ||
-                "未命名"
-              )}
-
-            </h2>
-
-            <div class="today-person">
-
-              ❤️
-
-              ${escapeHTML(
-                item.ordered_by ||
-                "家人"
-              )}
-
-            </div>
-
-            <div class="today-time">
-
-              点菜时间：
-
-              ${escapeHTML(time)}
-
-            </div>
-
-            <br>
-
-            <button
-              class="delete"
-              onclick="removeOrder('${escapeHTML(String(item.id))}')">
-
-              取消
-
-            </button>
-
-          </div>
-
-        `;
-
-      }).join("")
-    }
-
+    <div class="search-result-count">今天共有 ${orders.length} 道点菜 ❤️</div>
+    ${orders.map(function(item) {
+      const icon = getIconFromFoodName(item.recipe_name);
+      return `
+        <div data-menu-name="${escapeHTML(item.recipe_name || '未命名')}" data-ordered-by="${escapeHTML(item.ordered_by || '家人')}" style="display:flex;align-items:center;gap:8px;padding:9px 10px;margin-bottom:7px;background:#fff8f2;border-radius:13px;">
+          <span style="font-size:21px;">${icon}</span>
+          <span style="font-weight:bold;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHTML(item.recipe_name || '未命名')}</span>
+          <span style="flex:0 0 auto;color:#8a573d;font-size:12px;white-space:nowrap;">❤️ ${escapeHTML(item.ordered_by || '家人')}</span>
+          <button type="button" onclick="removeOrder('${escapeHTML(String(item.id))}')" style="flex:0 0 auto;border:0;background:transparent;color:#9a5e3d;font-size:12px;font-weight:bold;padding:5px 3px;cursor:pointer;">取消</button>
+        </div>
+      `;
+    }).join('')}
   `;
 
 }
