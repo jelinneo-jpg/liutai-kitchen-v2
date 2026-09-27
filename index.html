@@ -2234,9 +2234,42 @@ function renderChefRecommendations() {
     return `<div style="display:flex;align-items:center;gap:8px;padding:9px 10px;margin-bottom:7px;background:#fff8f2;border-radius:13px;">
       <span style="font-size:21px;">${icon}</span>
       <span style="font-weight:bold;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHTML(item.name)}</span>
+      <button type="button" onclick="addChefRecommendationToToday('${escapeHTML(String(item.id))}')" style="flex:0 0 auto;border:0;border-radius:9px;background:#e69765;color:white;font-size:11px;font-weight:bold;padding:6px 8px;cursor:pointer;white-space:nowrap;">加入今日菜单</button>
       <button type="button" onclick="removeChefRecommendation('${escapeHTML(String(item.id))}')" style="flex:0 0 auto;border:0;background:transparent;color:#9a5e3d;font-size:12px;font-weight:bold;padding:5px 3px;cursor:pointer;">取消</button>
     </div>`;
   }).join("");
+}
+
+async function addChefRecommendationToToday(id) {
+  const item = getChefRecommendations().find(function(x){ return String(x.id) === String(id); });
+  if (!item) return;
+
+  try {
+    const response = await supabaseFetch(
+      "/family_orders",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Prefer": "return=representation"
+        },
+        body: JSON.stringify({
+          recipe_name: item.name || "未命名食物",
+          ordered_by: "厨师推荐"
+        })
+      }
+    );
+
+    const text = await response.text();
+    if (!response.ok) {
+      alert("加入今日菜单失败 😢\n\n" + text);
+      return;
+    }
+
+    await loadTodayOrders();
+  } catch (error) {
+    alert("无法加入今日菜单 😢\n\n" + (error.message || ""));
+  }
 }
 
 function removeChefRecommendation(id) {
@@ -2257,7 +2290,7 @@ function shareTodayMenuWhatsApp() {
   lines.push('', '❤️ 今日菜单');
   if (todayRows.length) {
     todayRows.forEach(function(row){
-      lines.push('• ' + (row.dataset.menuName || '未命名') + ' ❤️ ' + (row.dataset.orderedBy || '家人'));
+      lines.push('• ' + (row.dataset.menuName || '未命名'));
     });
   } else {
     lines.push('• 暂无');
@@ -3020,7 +3053,6 @@ function renderToday(orders) {
         <div data-menu-name="${escapeHTML(item.recipe_name || '未命名')}" data-ordered-by="${escapeHTML(item.ordered_by || '家人')}" style="display:flex;align-items:center;gap:8px;padding:9px 10px;margin-bottom:7px;background:#fff8f2;border-radius:13px;">
           <span style="font-size:21px;">${icon}</span>
           <span style="font-weight:bold;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHTML(item.recipe_name || '未命名')}</span>
-          <span style="flex:0 0 auto;color:#8a573d;font-size:12px;white-space:nowrap;">❤️ ${escapeHTML(item.ordered_by || '家人')}</span>
           <button type="button" onclick="removeOrder('${escapeHTML(String(item.id))}')" style="flex:0 0 auto;border:0;background:transparent;color:#9a5e3d;font-size:12px;font-weight:bold;padding:5px 3px;cursor:pointer;">取消</button>
         </div>
       `;
