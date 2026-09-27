@@ -172,6 +172,7 @@ header.kitchen-header{
   margin:4px 0 0;
   font-size:14px;
   line-height:1.15;
+  transform:translateX(-5px);
 }
 @media (max-width:420px){
   header.kitchen-header{ min-height:74px; padding:1px 52px 1px; }
@@ -226,7 +227,7 @@ header p {
 .logout-button {
   position: absolute;
   right: 10px;
-  top: 50%;
+  top: 38%;
   transform: translateY(-50%);
   border: 0;
   border-radius: 14px;
@@ -947,6 +948,30 @@ nav { position: sticky; top: var(--header-h); z-index: 999; }
   .compact-actions button { font-size:11px; padding:7px 5px; }
 }
 
+
+.header-backup-button{
+  position:absolute;
+  right:10px;
+  top:67%;
+  transform:translateY(-50%);
+  border:0;
+  border-radius:14px;
+  padding:6px 8px;
+  background:rgba(255,255,255,.72);
+  color:#8a573d;
+  font-size:11px;
+  font-weight:bold;
+  cursor:pointer;
+  white-space:nowrap;
+}
+@media (max-width:420px){
+  .kitchen-header .header-backup-button{
+    right:7px;
+    padding:6px 7px;
+    font-size:10px;
+  }
+}
+
 </style>
 
 
@@ -1120,6 +1145,7 @@ nav .nav-btn,
     <img class="kitchen-header-bear right" src="kitchen-header-right-v2.png" alt="">
   </div>
   <button class="logout-button" onclick="logoutKitchen()">退出</button>
+  <button class="header-backup-button" type="button" onclick="showPage('backup', null)">💾 资料备份</button>
 </header>
 
 
