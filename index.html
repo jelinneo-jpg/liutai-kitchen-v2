@@ -3053,6 +3053,7 @@ function renderToday(orders) {
         <div data-menu-name="${escapeHTML(item.recipe_name || '未命名')}" data-ordered-by="${escapeHTML(item.ordered_by || '家人')}" style="display:flex;align-items:center;gap:8px;padding:9px 10px;margin-bottom:7px;background:#fff8f2;border-radius:13px;">
           <span style="font-size:21px;">${icon}</span>
           <span style="font-weight:bold;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHTML(item.recipe_name || '未命名')}</span>
+          ${item.ordered_by && item.ordered_by !== "厨师推荐" ? `<span style="flex:0 0 auto;color:#9a5e3d;font-size:12px;font-weight:bold;white-space:nowrap;">❤️ ${escapeHTML(item.ordered_by)}</span>` : ""}
           <button type="button" onclick="removeOrder('${escapeHTML(String(item.id))}')" style="flex:0 0 auto;border:0;background:transparent;color:#9a5e3d;font-size:12px;font-weight:bold;padding:5px 3px;cursor:pointer;">取消</button>
         </div>
       `;
