@@ -1196,8 +1196,9 @@ nav .nav-btn,
     <select id="ingredientType">
       <option value="肉类">🥩 肉类</option><option value="鱼/海鲜">🐟 鱼 / 海鲜</option><option value="蔬菜">🥬 蔬菜</option><option value="蛋/豆腐">🥚 蛋 / 豆腐</option><option value="其他">🍄 其他</option>
     </select>
-    <label>数量 / 分量</label><input id="ingredientAmount" placeholder="例如：2只、200g、半包">
-    <label style="display:flex;align-items:center;gap:8px;margin:8px 0;"><input id="ingredientUseToday" type="checkbox" style="width:auto;margin:0;">⭐ 今天要用</label>
+    <label>数量</label><input id="ingredientQty" type="number" min="0" step="any" inputmode="decimal" placeholder="例如：3">
+    <label>单位</label>
+    <select id="ingredientUnit"><option value="条">条</option><option value="粒">粒</option><option value="只">只</option><option value="包">包</option><option value="盒">盒</option><option value="瓶">瓶</option><option value="个">个</option><option value="片">片</option><option value="g">g</option><option value="kg">kg</option><option value="ml">ml</option><option value="L">L</option></select>
     <label style="display:flex;align-items:center;gap:8px;margin:8px 0 14px;"><input id="ingredientExpiring" type="checkbox" style="width:auto;margin:0;">⚠️ 快过期</label>
     <button class="save-recipe" onclick="addTodayIngredient()">保存食材 ❤️</button>
     <button class="cancel-edit" onclick="toggleIngredientForm(false)">取消</button>
@@ -5896,78 +5897,73 @@ async function importKitchenData(input) {
 
 
 /* =====================================================
-   今日食材（保存在本机浏览器）
+   我的食材（库存 + 已用完）
 ===================================================== */
 const TODAY_INGREDIENTS_KEY = "liutai_kitchen_today_ingredients";
-
-function kitchenLocalDateKey() {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth()+1).padStart(2,"0");
-  const day = String(d.getDate()).padStart(2,"0");
-  return `${y}-${m}-${day}`;
-}
 
 function getTodayIngredientsAll() {
   try { return JSON.parse(localStorage.getItem(TODAY_INGREDIENTS_KEY) || "[]"); }
   catch(e) { return []; }
 }
-
-function saveTodayIngredientsAll(list) {
-  localStorage.setItem(TODAY_INGREDIENTS_KEY, JSON.stringify(list));
-}
-
+function saveTodayIngredientsAll(list) { localStorage.setItem(TODAY_INGREDIENTS_KEY, JSON.stringify(list)); }
 function toggleIngredientForm(force) {
-  const box = document.getElementById("ingredientForm");
-  if (!box) return;
+  const box = document.getElementById("ingredientForm"); if (!box) return;
   const show = typeof force === "boolean" ? force : box.classList.contains("hidden");
   box.classList.toggle("hidden", !show);
 }
-
+function normalizeIngredient(x) {
+  if (typeof x.qty !== "number") {
+    const m = String(x.amount || "").match(/^\s*(\d+(?:\.\d+)?)\s*(.*)$/);
+    x.qty = m ? Number(m[1]) : 1;
+    x.unit = x.unit || (m && m[2] ? m[2] : "份");
+  }
+  if (!x.unit) x.unit = "份";
+  if (!x.status) x.status = x.qty <= 0 ? "done" : "active";
+  return x;
+}
+function fmtQty(n) { return Number.isInteger(Number(n)) ? String(Number(n)) : String(Number(n).toFixed(2)).replace(/0+$/,"").replace(/\.$/,""); }
 function addTodayIngredient() {
   const name = document.getElementById("ingredientName").value.trim();
+  const qty = Number(document.getElementById("ingredientQty").value);
   if (!name) { alert("请先填写食材名称 ❤️"); return; }
-  const item = {
-    id: Date.now(), date: kitchenLocalDateKey(), name,
-    type: document.getElementById("ingredientType").value,
-    amount: document.getElementById("ingredientAmount").value.trim(),
-    useToday: document.getElementById("ingredientUseToday").checked,
-    expiring: document.getElementById("ingredientExpiring").checked
-  };
-  const all = getTodayIngredientsAll(); all.push(item); saveTodayIngredientsAll(all);
-  document.getElementById("ingredientName").value = "";
-  document.getElementById("ingredientAmount").value = "";
-  document.getElementById("ingredientUseToday").checked = false;
-  document.getElementById("ingredientExpiring").checked = false;
-  toggleIngredientForm(false); renderTodayIngredients();
+  if (!(qty > 0)) { alert("请输入大于 0 的数量 ❤️"); return; }
+  const item = { id:Date.now(), name, type:document.getElementById("ingredientType").value,
+    qty, unit:document.getElementById("ingredientUnit").value,
+    expiring:document.getElementById("ingredientExpiring").checked, status:"active", createdAt:new Date().toISOString() };
+  const all=getTodayIngredientsAll(); all.push(item); saveTodayIngredientsAll(all);
+  document.getElementById("ingredientName").value=""; document.getElementById("ingredientQty").value="";
+  document.getElementById("ingredientExpiring").checked=false; toggleIngredientForm(false); renderTodayIngredients();
 }
-
-function deleteTodayIngredient(id) {
-  saveTodayIngredientsAll(getTodayIngredientsAll().filter(x => String(x.id) !== String(id)));
-  renderTodayIngredients();
+function useIngredient(id) {
+  const all=getTodayIngredientsAll().map(normalizeIngredient); const x=all.find(v=>String(v.id)===String(id)); if(!x)return;
+  const raw=prompt(`用了多少${x.unit}？\n目前剩余：${fmtQty(x.qty)}${x.unit}`, "1"); if(raw===null)return;
+  const used=Number(raw); if(!(used>0)){alert("请输入正确的数量 ❤️");return;} if(used>x.qty){alert(`目前只剩 ${fmtQty(x.qty)}${x.unit} ❤️`);return;}
+  x.qty=Math.max(0,x.qty-used); if(x.qty===0){x.status="done";x.finishedAt=new Date().toISOString();}
+  saveTodayIngredientsAll(all); renderTodayIngredients();
 }
-
+function restockIngredient(id) {
+  const all=getTodayIngredientsAll().map(normalizeIngredient); const x=all.find(v=>String(v.id)===String(id)); if(!x)return;
+  const raw=prompt(`补货多少${x.unit}？`, "1"); if(raw===null)return; const add=Number(raw);
+  if(!(add>0)){alert("请输入正确的数量 ❤️");return;} x.qty+=add; x.status="active"; delete x.finishedAt;
+  saveTodayIngredientsAll(all); renderTodayIngredients();
+}
+function restoreIngredient(id) {
+  const all=getTodayIngredientsAll().map(normalizeIngredient); const x=all.find(v=>String(v.id)===String(id)); if(!x)return;
+  const raw=prompt(`恢复「${x.name}」\n请输入现在有多少${x.unit}：`, "1"); if(raw===null)return; const q=Number(raw);
+  if(!(q>0)){alert("请输入正确的数量 ❤️");return;} x.qty=q; x.status="active"; delete x.finishedAt;
+  saveTodayIngredientsAll(all); renderTodayIngredients();
+}
+function deleteTodayIngredient(id) { saveTodayIngredientsAll(getTodayIngredientsAll().filter(x=>String(x.id)!==String(id))); renderTodayIngredients(); }
 function renderTodayIngredients() {
-  const box = document.getElementById("todayIngredientList"); if (!box) return;
-  const key = kitchenLocalDateKey();
-  const dateBox = document.getElementById("ingredientTodayDate");
-  if (dateBox) dateBox.textContent = "今天 · " + key;
-  const items = getTodayIngredientsAll().filter(x => x.date === key)
-    .sort((a,b) => Number(b.expiring)-Number(a.expiring) || Number(b.useToday)-Number(a.useToday));
-  if (!items.length) { box.innerHTML = '<div class="empty">今天还没有添加食材 😊</div>'; return; }
-  const icons = {"肉类":"🥩","鱼/海鲜":"🐟","蔬菜":"🥬","蛋/豆腐":"🥚","其他":"🍄"};
-  box.innerHTML = items.map(x => `
-    <div class="compact-card">
-      <div style="display:flex;align-items:center;gap:11px;">
-        <div class="compact-icon-box">${icons[x.type] || "🍄"}</div>
-        <div style="flex:1;min-width:0;">
-          <div style="font-weight:bold;font-size:16px;">${escapeHTML(x.name)}</div>
-          <div style="font-size:12px;color:#987d70;margin-top:4px;">${escapeHTML(x.type)}${x.amount ? " · "+escapeHTML(x.amount) : ""}</div>
-          <div style="font-size:12px;margin-top:5px;">${x.expiring ? "⚠️ 快过期&nbsp;&nbsp;" : ""}${x.useToday ? "⭐ 今天要用" : ""}</div>
-        </div>
-        <button class="small-delete" onclick="deleteTodayIngredient('${x.id}')">🗑️</button>
-      </div>
-    </div>`).join("");
+  const box=document.getElementById("todayIngredientList"); if(!box)return;
+  const dateBox=document.getElementById("ingredientTodayDate"); if(dateBox) dateBox.textContent="家里现在有的食材 · 用了会自动扣减";
+  const all=getTodayIngredientsAll().map(normalizeIngredient); saveTodayIngredientsAll(all);
+  const active=all.filter(x=>x.status!=="done"&&x.qty>0).sort((a,b)=>Number(b.expiring)-Number(a.expiring));
+  const done=all.filter(x=>x.status==="done"||x.qty<=0).sort((a,b)=>String(b.finishedAt||"").localeCompare(String(a.finishedAt||"")));
+  const icons={"肉类":"🥩","鱼/海鲜":"🐟","蔬菜":"🥬","蛋/豆腐":"🥚","其他":"🍄"};
+  const activeHtml=active.length?active.map(x=>`<div class="compact-card"><div style="display:flex;align-items:center;gap:11px;"><div class="compact-icon-box">${icons[x.type]||"🍄"}</div><div style="flex:1;min-width:0;"><div style="font-weight:bold;font-size:16px;">${escapeHTML(x.name)}</div><div style="font-size:13px;color:#8a573d;margin-top:4px;">剩余：<b>${fmtQty(x.qty)} ${escapeHTML(x.unit)}</b>${x.expiring?' &nbsp;⚠️ 快过期':''}</div><div style="display:flex;gap:6px;margin-top:8px;"><button type="button" onclick="useIngredient('${x.id}')" style="border:0;border-radius:10px;padding:7px 9px;background:#e69765;color:white;font-weight:bold;cursor:pointer;">－ 用了</button><button type="button" onclick="restockIngredient('${x.id}')" style="border:0;border-radius:10px;padding:7px 9px;background:#fff0e5;color:#8a573d;font-weight:bold;cursor:pointer;">＋ 补货</button></div></div><button class="small-delete" onclick="deleteTodayIngredient('${x.id}')">🗑️</button></div></div>`).join(""):'<div class="empty">现在没有食材 😊<br>可以点击「➕ 添加食材」加入。</div>';
+  const doneHtml=done.length?done.map(x=>`<div class="compact-card" style="opacity:.72;"><div style="display:flex;align-items:center;gap:11px;"><div class="compact-icon-box">${icons[x.type]||"🍄"}</div><div style="flex:1;min-width:0;"><div style="font-weight:bold;font-size:15px;text-decoration:line-through;">${escapeHTML(x.name)}</div><div style="font-size:12px;color:#987d70;margin-top:4px;">已用完</div><button type="button" onclick="restoreIngredient('${x.id}')" style="border:0;border-radius:10px;padding:7px 10px;margin-top:7px;background:#fff0e5;color:#8a573d;font-weight:bold;cursor:pointer;">↩️ 恢复</button></div><button class="small-delete" onclick="deleteTodayIngredient('${x.id}')">🗑️</button></div></div>`).join(""):'<div style="color:#987d70;font-size:13px;padding:8px 2px 18px;">还没有已用完的食材</div>';
+  box.innerHTML=`<h3 style="margin:12px 0 10px;">🥬 现有食材</h3>${activeHtml}<h3 style="margin:22px 0 10px;">✅ 已用完</h3>${doneHtml}`;
 }
 
 /* =====================================================
