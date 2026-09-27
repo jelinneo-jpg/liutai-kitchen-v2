@@ -1217,7 +1217,7 @@ nav .nav-btn,
 
   <div class="card">
 
-    <div class="menu-title" style="font-weight:bold;">👩‍🍳 厨师推荐菜</div>
+    <div class="menu-title" style="font-weight:bold;display:flex;align-items:center;justify-content:center;gap:7px;"><img src="chef-recommend-icon.png" alt="" style="width:28px;height:28px;object-fit:cover;object-position:center 20%;border-radius:50%;">厨师推荐菜</div>
     <div id="chefRecommendationList"></div>
     <div style="height:1px;background:#f1e3da;margin:18px 0;"></div>
     <div class="menu-title" style="font-weight:bold;">❤️ 今日菜单</div>
@@ -3046,7 +3046,7 @@ function renderToday(orders) {
 
 
   box.innerHTML = `
-    <div class="search-result-count">今天共有 ${orders.length} 道点菜 ❤️</div>
+    <div class="search-result-count">今天共有 ${orders.length} 道点菜 🥘</div>
     ${orders.map(function(item) {
       const icon = getIconFromFoodName(item.recipe_name);
       return `
