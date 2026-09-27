@@ -1101,6 +1101,11 @@ nav .nav-btn,
   </button>
 
   <button
+    onclick="showPage('ingredientsToday', this)">
+    🥬 今日食材
+  </button>
+
+  <button
     onclick="showPage('today', this)">
     📋 今日菜单
   </button>
@@ -1110,13 +1115,11 @@ nav .nav-btn,
     📖 食谱
   </button>
 
-  <button
-    onclick="showPage('backup', this)">
-    💾 资料备份
-  </button>
-
 </nav>
 
+<div style="max-width:650px;margin:0 auto;padding:7px 18px 0;display:flex;justify-content:flex-end;">
+  <button type="button" onclick="showPage('backup', null)" title="资料备份" style="border:0;border-radius:12px;padding:7px 10px;background:#fff0e5;color:#8a573d;font-size:13px;font-weight:bold;cursor:pointer;">💾 资料备份</button>
+</div>
 
 <main>
 
@@ -1180,6 +1183,28 @@ nav .nav-btn,
 
   </div>
 
+</section>
+
+
+<section id="ingredientsToday" class="hidden">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;">
+    <h2 style="margin:0;">🥬 今日食材</h2>
+    <button type="button" onclick="toggleIngredientForm()" style="border:0;border-radius:12px;padding:7px 11px;background:#fff0e5;color:#8a573d;font-size:13px;font-weight:bold;cursor:pointer;">➕ 添加食材</button>
+  </div>
+  <div id="ingredientTodayDate" style="color:#987d70;font-size:13px;margin-bottom:10px;"></div>
+  <div id="ingredientForm" class="card hidden">
+    <label>食材名称</label><input id="ingredientName" placeholder="例如：鸡腿肉">
+    <label>分类</label>
+    <select id="ingredientType">
+      <option value="肉类">🥩 肉类</option><option value="鱼/海鲜">🐟 鱼 / 海鲜</option><option value="蔬菜">🥬 蔬菜</option><option value="蛋/豆腐">🥚 蛋 / 豆腐</option><option value="其他">🍄 其他</option>
+    </select>
+    <label>数量 / 分量</label><input id="ingredientAmount" placeholder="例如：2只、200g、半包">
+    <label style="display:flex;align-items:center;gap:8px;margin:8px 0;"><input id="ingredientUseToday" type="checkbox" style="width:auto;margin:0;">⭐ 今天要用</label>
+    <label style="display:flex;align-items:center;gap:8px;margin:8px 0 14px;"><input id="ingredientExpiring" type="checkbox" style="width:auto;margin:0;">⚠️ 快过期</label>
+    <button class="save-recipe" onclick="addTodayIngredient()">保存食材 ❤️</button>
+    <button class="cancel-edit" onclick="toggleIngredientForm(false)">取消</button>
+  </div>
+  <div id="todayIngredientList"></div>
 </section>
 
 
@@ -5510,7 +5535,10 @@ async function exportKitchenData() {
         results[1],
 
       family_orders:
-        results[2]
+        results[2],
+
+      today_ingredients:
+        getTodayIngredientsAll()
 
     };
 
@@ -5831,6 +5859,10 @@ async function importKitchenData(input) {
       backup.family_orders
     );
 
+    if (Array.isArray(backup.today_ingredients)) {
+      saveTodayIngredientsAll(backup.today_ingredients);
+    }
+
 
     await loadFoods();
 
@@ -5866,6 +5898,81 @@ async function importKitchenData(input) {
 
 
 /* =====================================================
+   今日食材（保存在本机浏览器）
+===================================================== */
+const TODAY_INGREDIENTS_KEY = "liutai_kitchen_today_ingredients";
+
+function kitchenLocalDateKey() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const day = String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${day}`;
+}
+
+function getTodayIngredientsAll() {
+  try { return JSON.parse(localStorage.getItem(TODAY_INGREDIENTS_KEY) || "[]"); }
+  catch(e) { return []; }
+}
+
+function saveTodayIngredientsAll(list) {
+  localStorage.setItem(TODAY_INGREDIENTS_KEY, JSON.stringify(list));
+}
+
+function toggleIngredientForm(force) {
+  const box = document.getElementById("ingredientForm");
+  if (!box) return;
+  const show = typeof force === "boolean" ? force : box.classList.contains("hidden");
+  box.classList.toggle("hidden", !show);
+}
+
+function addTodayIngredient() {
+  const name = document.getElementById("ingredientName").value.trim();
+  if (!name) { alert("请先填写食材名称 ❤️"); return; }
+  const item = {
+    id: Date.now(), date: kitchenLocalDateKey(), name,
+    type: document.getElementById("ingredientType").value,
+    amount: document.getElementById("ingredientAmount").value.trim(),
+    useToday: document.getElementById("ingredientUseToday").checked,
+    expiring: document.getElementById("ingredientExpiring").checked
+  };
+  const all = getTodayIngredientsAll(); all.push(item); saveTodayIngredientsAll(all);
+  document.getElementById("ingredientName").value = "";
+  document.getElementById("ingredientAmount").value = "";
+  document.getElementById("ingredientUseToday").checked = false;
+  document.getElementById("ingredientExpiring").checked = false;
+  toggleIngredientForm(false); renderTodayIngredients();
+}
+
+function deleteTodayIngredient(id) {
+  saveTodayIngredientsAll(getTodayIngredientsAll().filter(x => String(x.id) !== String(id)));
+  renderTodayIngredients();
+}
+
+function renderTodayIngredients() {
+  const box = document.getElementById("todayIngredientList"); if (!box) return;
+  const key = kitchenLocalDateKey();
+  const dateBox = document.getElementById("ingredientTodayDate");
+  if (dateBox) dateBox.textContent = "今天 · " + key;
+  const items = getTodayIngredientsAll().filter(x => x.date === key)
+    .sort((a,b) => Number(b.expiring)-Number(a.expiring) || Number(b.useToday)-Number(a.useToday));
+  if (!items.length) { box.innerHTML = '<div class="empty">今天还没有添加食材 😊</div>'; return; }
+  const icons = {"肉类":"🥩","鱼/海鲜":"🐟","蔬菜":"🥬","蛋/豆腐":"🥚","其他":"🍄"};
+  box.innerHTML = items.map(x => `
+    <div class="compact-card">
+      <div style="display:flex;align-items:center;gap:11px;">
+        <div class="compact-icon-box">${icons[x.type] || "🍄"}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:bold;font-size:16px;">${escapeHTML(x.name)}</div>
+          <div style="font-size:12px;color:#987d70;margin-top:4px;">${escapeHTML(x.type)}${x.amount ? " · "+escapeHTML(x.amount) : ""}</div>
+          <div style="font-size:12px;margin-top:5px;">${x.expiring ? "⚠️ 快过期&nbsp;&nbsp;" : ""}${x.useToday ? "⭐ 今天要用" : ""}</div>
+        </div>
+        <button class="small-delete" onclick="deleteTodayIngredient('${x.id}')">🗑️</button>
+      </div>
+    </div>`).join("");
+}
+
+/* =====================================================
    页面切换
 ===================================================== */
 
@@ -5880,6 +5987,7 @@ function showPage(page, button) {
 
     "foods",
     "addFood",
+    "ingredientsToday",
     "today",
     "cookbook",
     "addRecipe",
@@ -5959,6 +6067,13 @@ function showPage(page, button) {
   if (page === "addFood") {
 
     renderCategoryOptions();
+
+  }
+
+
+  if (page === "ingredientsToday") {
+
+    renderTodayIngredients();
 
   }
 
