@@ -1037,6 +1037,26 @@ nav .nav-btn,
 }
 </style>
 
+
+<style>
+/* 我的食材：现有食材与添加食材同一排 */
+#ingredientsToday > div:first-child{
+  margin-top:-8px !important;
+  margin-bottom:10px !important;
+  justify-content:space-between !important;
+}
+#ingredientsToday > div:first-child::before{
+  content:"🥬 现有食材";
+  font-size:22px;
+  line-height:1.2;
+  font-weight:700;
+  color:#3d2b24;
+}
+#ingredientsToday #todayIngredientList > h3:first-child{
+  display:none !important;
+}
+</style>
+
 </head>
 
 <body>
