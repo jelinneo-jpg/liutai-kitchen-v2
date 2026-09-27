@@ -2266,7 +2266,11 @@ function toggleChefPickMode() {
     chefPickSelected = new Set(getChefRecommendations().map(x => String(x.id)));
   }
   const btn = document.getElementById("chefPickModeButton");
-  if (btn) btn.textContent = chefPickMode ? "完成推荐" : "👩‍🍳 选推荐菜";
+  if (btn) {
+    btn.innerHTML = chefPickMode
+      ? "完成推荐"
+      : '<img src="chef-recommend-icon.png" alt="" style="width:18px;height:18px;object-fit:contain;object-position:center;display:block;">选推荐菜';
+  }
   if (!chefPickMode) {
     const selectedFoods = foods.filter(f => chefPickSelected.has(String(f.id))).map(f => ({id:String(f.id), name:f.name || "未命名食物", category:f.category || "其他"}));
     localStorage.setItem(CHEF_PICK_KEY, JSON.stringify(selectedFoods));
