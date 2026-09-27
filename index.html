@@ -1126,7 +1126,7 @@ nav .nav-btn,
   <div class="list-sticky-tools">
   <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
     <h2 style="margin-right:auto;">🍽️ 刘太食物</h2>
-    <button type="button" onclick="showPage('addFood', null)" style="flex:0 0 auto;border:0;border-radius:12px;padding:7px 11px;background:#fff0e5;color:#8a573d;font-size:13px;font-weight:bold;cursor:pointer;">➕ 添加</button>
+    <button type="button" onclick="showPage('addFood', null)" style="flex:0 0 auto;border:0;border-radius:12px;padding:7px 11px;background:#fff0e5;color:#8a573d;font-size:13px;font-weight:bold;cursor:pointer;">➕ 添加食物</button>
   </div>
 
   <input
@@ -1149,7 +1149,10 @@ nav .nav-btn,
 
 <section id="addFood" class="hidden">
 
-  <h2>➕ 添加食物</h2>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+    <h2>➕ 添加食物</h2>
+    <button type="button" onclick="showPage('foods', null)" style="flex:0 0 auto;border:0;border-radius:12px;padding:7px 11px;background:#eee;color:#8a573d;font-size:13px;font-weight:bold;cursor:pointer;">取消</button>
+  </div>
 
   <div class="card">
 
