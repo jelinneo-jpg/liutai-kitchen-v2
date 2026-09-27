@@ -1309,7 +1309,10 @@ nav .nav-btn,
 <section id="cookbook" class="hidden">
 
   <div class="list-sticky-tools">
-  <h2>📖 刘太食谱</h2>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+    <h2 style="margin-right:auto;">📖 刘太食谱</h2>
+    <button type="button" onclick="showPage('addRecipe', null)" style="flex:0 0 auto;border:0;border-radius:12px;padding:7px 11px;background:#fff0e5;color:#8a573d;font-size:13px;font-weight:bold;cursor:pointer;">➕ 添加食谱</button>
+  </div>
 
   <input
     id="recipeSearch"
@@ -1317,13 +1320,6 @@ nav .nav-btn,
     type="search"
     placeholder="🔍 搜索食谱，例如：鸡扒、汤、蛋糕"
     oninput="searchRecipes()">
-
-  <button
-    class="save-recipe"
-    style="margin-bottom:10px;"
-    onclick="showPage('addRecipe', null)">
-    ➕ 添加食谱
-  </button>
   </div>
 
   <div class="compact-browser">
