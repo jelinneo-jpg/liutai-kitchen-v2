@@ -1716,6 +1716,8 @@ const SUPABASE_KEY =
 
 
 let foods = [];
+let foodsLoadPromise = null;
+let recipesLoadPromise = null;
 
 let recipes = [];
 
@@ -2133,6 +2135,9 @@ function filterRecipeCategory(category) {
 ===================================================== */
 
 async function loadFoods() {
+  if (foodsLoadPromise) return foodsLoadPromise;
+
+  foodsLoadPromise = (async function() {
 
   if (!siteUnlocked) return;
 
@@ -2234,6 +2239,14 @@ async function loadFoods() {
 
   }
 
+
+  })();
+
+  try {
+    return await foodsLoadPromise;
+  } finally {
+    foodsLoadPromise = null;
+  }
 }
 
 
@@ -3280,6 +3293,9 @@ function renderToday(orders) {
 ===================================================== */
 
 async function loadRecipes() {
+  if (recipesLoadPromise) return recipesLoadPromise;
+
+  recipesLoadPromise = (async function() {
 
   if (!siteUnlocked) return;
 
@@ -3372,6 +3388,14 @@ async function loadRecipes() {
 
   }
 
+
+  })();
+
+  try {
+    return await recipesLoadPromise;
+  } finally {
+    recipesLoadPromise = null;
+  }
 }
 
 
