@@ -1090,15 +1090,28 @@ nav .nav-btn,
 }
 </style>
 
-<style>
 
-#ingredientsToday{height:calc(100dvh - var(--header-h) - var(--nav-h) - 12px);min-height:220px;overflow:hidden!important;display:flex;flex-direction:column}
-#ingredientsToday>div:first-child{flex:0 0 auto}
-#ingredientsToday #ingredientForm{flex:0 0 auto}
-#ingredientsToday #todayIngredientList{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;padding-bottom:24px;scrollbar-width:none}
-#ingredientsToday #todayIngredientList::-webkit-scrollbar{display:none}
+<style id="ingredient-cards-scroll-only">
+/* 只在「我的食材」页面开启时锁住整页滚动 */
+html.ingredient-scroll-lock,
+body.ingredient-scroll-lock{
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
 
+/* 只让食材卡片容器滚动；标题那一排完全沿用原件 */
+#ingredientsToday:not(.hidden) #todayIngredientList{
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior: contain !important;
+  touch-action: pan-y !important;
+  min-height: 0 !important;
+  margin-bottom: 0 !important;
+  padding-bottom: 90px !important;
+}
 </style>
+
 </head>
 
 <body>
@@ -6673,6 +6686,77 @@ setTimeout(updateStickyHeights, 100);
 
 const stickyObserver = new MutationObserver(function(){ setTimeout(updateStickyHeights, 0); });
 document.querySelectorAll("#foods, #cookbook").forEach(function(el){ stickyObserver.observe(el, {attributes:true, attributeFilter:["class"]}); });
+</script>
+
+
+<script id="ingredient-cards-scroll-only-js">
+(function(){
+  const section = document.getElementById("ingredientsToday");
+  const list = document.getElementById("todayIngredientList");
+  if (!section || !list) return;
+
+  function isIngredientPageOpen(){
+    return !section.classList.contains("hidden");
+  }
+
+  function sizeIngredientCardScroller(){
+    if (!isIngredientPageOpen()) return;
+
+    const viewportHeight = window.visualViewport
+      ? window.visualViewport.height
+      : window.innerHeight;
+
+    const listTop = list.getBoundingClientRect().top;
+    const available = Math.max(140, Math.floor(viewportHeight - listTop));
+
+    list.style.height = available + "px";
+    list.style.maxHeight = available + "px";
+  }
+
+  function applyIngredientScrollMode(){
+    const active = isIngredientPageOpen();
+
+    document.documentElement.classList.toggle("ingredient-scroll-lock", active);
+    document.body.classList.toggle("ingredient-scroll-lock", active);
+
+    if (active){
+      requestAnimationFrame(function(){
+        sizeIngredientCardScroller();
+        requestAnimationFrame(sizeIngredientCardScroller);
+      });
+    } else {
+      list.style.height = "";
+      list.style.maxHeight = "";
+    }
+  }
+
+  /* 监听页面切换，不改原本 showPage() */
+  const observer = new MutationObserver(applyIngredientScrollMode);
+  observer.observe(section, {attributes:true, attributeFilter:["class"]});
+
+  window.addEventListener("resize", function(){
+    if (isIngredientPageOpen()) sizeIngredientCardScroller();
+  });
+
+  if (window.visualViewport){
+    window.visualViewport.addEventListener("resize", function(){
+      if (isIngredientPageOpen()) sizeIngredientCardScroller();
+    });
+  }
+
+  /* 添加/关闭食材表单时，列表起点会改变，所以重新计算 */
+  const form = document.getElementById("ingredientForm");
+  if (form){
+    const formObserver = new MutationObserver(function(){
+      if (isIngredientPageOpen()){
+        requestAnimationFrame(sizeIngredientCardScroller);
+      }
+    });
+    formObserver.observe(form, {attributes:true, attributeFilter:["class"]});
+  }
+
+  applyIngredientScrollMode();
+})();
 </script>
 
 </body>
