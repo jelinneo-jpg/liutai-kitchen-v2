@@ -2290,17 +2290,7 @@ async function syncChefRecommendationsFromSupabase() {
   ensureChefRecommendationsForToday();
 
   try {
-    const local = getChefRecommendations();
-
-    // 同一天已有本机推荐菜：以本机为准，不再让云端空资料覆盖掉。
-    if (local.length) {
-      chefPickSelected = new Set(local.map(function(x){ return String(x.id); }));
-      chefRecommendationsSyncReady = true;
-      renderChefRecommendations();
-      if (chefPickMode) renderFoods();
-      return;
-    }
-
+    // 每次都读取 Supabase，让不同手机取得同一份今天推荐菜。
     const response = await supabaseFetch(
       CHEF_PICK_TABLE + "?select=*&order=created_at.asc",
       { method:"GET" }
@@ -2309,9 +2299,8 @@ async function syncChefRecommendationsFromSupabase() {
     if (!response.ok) throw new Error(raw || "读取推荐菜失败");
 
     const remote = raw ? JSON.parse(raw) : [];
-
-    // 只恢复今天写入云端的推荐菜；昨天的不会带到今天。
     const today = getChefTodayKey();
+
     const list = remote.filter(function(x){
       if (!x.created_at) return false;
       const d = new Date(x.created_at);
@@ -2351,12 +2340,20 @@ async function syncChefRecommendationsFromSupabase() {
 
 async function saveChefRecommendationsToSupabase(list) {
   try {
-    // 推荐菜数量很少：以当前选择为准，整表同步最稳定。
-    const del = await supabaseFetch(CHEF_PICK_TABLE + "?id=not.is.null", {method:"DELETE"});
+    const del = await supabaseFetch(
+      CHEF_PICK_TABLE + "?id=not.is.null",
+      {method:"DELETE"}
+    );
     if (!del.ok) throw new Error(await del.text());
+
     if (list.length) {
       const rows = list.map(function(x){
-        return {id:String(x.id), name:x.name || "未命名食物", category:x.category || "其他", created_at:new Date().toISOString()};
+        return {
+          id:String(x.id),
+          name:x.name || "未命名食物",
+          category:x.category || "其他",
+          created_at:new Date().toISOString()
+        };
       });
       const up = await supabaseFetch(CHEF_PICK_TABLE, {
         method:"POST",
@@ -2365,18 +2362,20 @@ async function saveChefRecommendationsToSupabase(list) {
       });
       if (!up.ok) throw new Error(await up.text());
     }
+    return true;
   } catch (e) {
     console.warn("推荐菜上传失败：", e);
+    alert("❌ 厨师推荐菜同步失败\\n\\n" + (e && e.message ? e.message : String(e)));
+    return false;
   }
 }
-
 
 function getChefRecommendations() {
   try { return JSON.parse(localStorage.getItem(CHEF_PICK_KEY) || "[]"); }
   catch(e) { return []; }
 }
 
-function toggleChefPickMode() {
+async function toggleChefPickMode() {
   chefPickMode = !chefPickMode;
   if (chefPickMode) {
     chefPickSelected = new Set(getChefRecommendations().map(x => String(x.id)));
@@ -2391,7 +2390,7 @@ function toggleChefPickMode() {
     const selectedFoods = foods.filter(f => chefPickSelected.has(String(f.id))).map(f => ({id:String(f.id), name:f.name || "未命名食物", category:f.category || "其他"}));
     localStorage.setItem(CHEF_PICK_KEY, JSON.stringify(selectedFoods));
     localStorage.setItem(CHEF_PICK_DATE_KEY, getChefTodayKey());
-    saveChefRecommendationsToSupabase(selectedFoods);
+    await saveChefRecommendationsToSupabase(selectedFoods);
   }
   renderFoods();
 }
@@ -2453,11 +2452,11 @@ async function addChefRecommendationToToday(id) {
   }
 }
 
-function removeChefRecommendation(id) {
+async function removeChefRecommendation(id) {
   const list = getChefRecommendations().filter(function(item){ return String(item.id) !== String(id); });
   localStorage.setItem(CHEF_PICK_KEY, JSON.stringify(list));
   localStorage.setItem(CHEF_PICK_DATE_KEY, getChefTodayKey());
-  saveChefRecommendationsToSupabase(list);
+  await saveChefRecommendationsToSupabase(list);
   chefPickSelected = new Set(list.map(function(item){ return String(item.id); }));
   renderChefRecommendations();
   if (chefPickMode) renderFoods();
@@ -6572,6 +6571,10 @@ document.addEventListener(
 
       loadTodayOrders();
 
+      syncChefRecommendationsFromSupabase();
+
+      syncTodayIngredientsFromSupabase();
+
     }
 
     else {
@@ -6616,6 +6619,10 @@ document.addEventListener(
     ) {
 
       loadTodayOrders();
+
+      syncChefRecommendationsFromSupabase();
+
+      syncTodayIngredientsFromSupabase();
 
     }
 
