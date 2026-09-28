@@ -1184,6 +1184,140 @@ nav .nav-btn,
 }
 </style>
 
+
+<style>
+/* 最终修正：关闭旧版自动生成的「现有食材」，避免标题重复 */
+#ingredientsToday > div:first-child::before{
+  content: none !important;
+  display: none !important;
+}
+
+/* 只保留真正的标题行 */
+#ingredientsToday .ingredient-sticky-tools{
+  margin: 0 !important;
+  padding: 0 0 8px !important;
+}
+
+#ingredientsToday .ingredient-title-row{
+  min-height: 42px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+#ingredientsToday .ingredient-title-row h2{
+  display: block !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1.25 !important;
+}
+</style>
+
+
+<style>
+/* ===== 我的食材标题：完全按「刘太菜单」一行式标题处理 ===== */
+
+/* 旧版自动产生的「🥬 现有食材」彻底关闭 */
+#ingredientsToday > div:first-child::before,
+#ingredientsToday .ingredient-sticky-tools::before,
+#ingredientsToday .ingredient-title-row::before{
+  content: none !important;
+  display: none !important;
+}
+
+/* 整个页面：上方固定，只有清单滚动 */
+#ingredientsToday{
+  height: calc(100dvh - var(--header-h) - var(--nav-h) - 18px) !important;
+  min-height: 220px !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding-top: 0 !important;
+}
+
+/* 与刘太菜单标题一样：只有一行 */
+#ingredientsToday .ingredient-sticky-tools{
+  flex: 0 0 auto !important;
+  display: block !important;
+  margin: 0 0 8px !important;
+  padding: 0 !important;
+  background: #fff8f2 !important;
+  position: relative !important;
+  z-index: 5 !important;
+  min-height: 0 !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+#ingredientsToday .ingredient-title-row{
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  min-height: 42px !important;
+  height: 42px !important;
+  overflow: visible !important;
+}
+
+#ingredientsToday .ingredient-title-row h2{
+  flex: 1 1 auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  font-size: 22px !important;
+  font-weight: 700 !important;
+  line-height: 42px !important;
+  color: #3d2b24 !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+}
+
+#ingredientsToday .ingredient-title-row button{
+  flex: 0 0 auto !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  padding: 7px 11px !important;
+  background: #fff0e5 !important;
+  color: #8a573d !important;
+  font-size: 13px !important;
+  font-weight: bold !important;
+  cursor: pointer !important;
+}
+
+/* 添加表单打开时放在标题下面 */
+#ingredientsToday #ingredientForm{
+  flex: 0 0 auto !important;
+  position: relative !important;
+  z-index: 4 !important;
+  margin-top: 0 !important;
+  margin-bottom: 8px !important;
+}
+
+/* 清单从标题下一行开始，只有这里可以上下滑 */
+#ingredientsToday #todayIngredientList{
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior: contain !important;
+  padding: 0 0 24px !important;
+  margin: 0 !important;
+}
+
+/* JS 清单内部原来的标题彻底隐藏，不留任何高度 */
+#ingredientsToday #todayIngredientList > h3:first-child{
+  display: none !important;
+  visibility: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  line-height: 0 !important;
+}
+</style>
+
 </head>
 
 <body>
