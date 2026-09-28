@@ -1001,7 +1001,6 @@ nav .nav-btn,
 #foods,
 #addFood,
 #today,
-#shopping,
 #cookbook,
 #backup{
   padding-top: 6px !important;
@@ -1014,7 +1013,6 @@ nav .nav-btn,
   #foods,
   #addFood,
   #today,
-  #shopping,
   #cookbook,
   #backup{
     padding-top: 6px !important;
@@ -1039,7 +1037,6 @@ nav .nav-btn,
 #foods,
 #addFood,
 #today,
-#shopping,
 #cookbook,
 #backup{
   padding-top: 0 !important;
@@ -1053,7 +1050,6 @@ nav .nav-btn,
 
 #addFood > h2,
 #today > h2,
-#shopping > h2,
 #backup > h2{
   margin-top: -8px !important;
   margin-bottom: 12px !important;
@@ -1184,11 +1180,6 @@ nav .nav-btn,
     📖 食谱
   </button>
 
-  <button
-    onclick="showPage('shopping', this)">
-    🛒 购物清单
-  </button>
-
 
 </nav>
 
@@ -1310,26 +1301,6 @@ nav .nav-btn,
 
     </div>
 
-  </div>
-
-</section>
-
-
-<section id="shopping" class="hidden">
-
-  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;">
-    <h2 style="margin:0;">🛒 购物清单</h2>
-    <button type="button" onclick="generateShoppingFromTodayMenu(this)" style="flex:0 0 auto;border:0;border-radius:12px;padding:7px 10px;background:#fff0e5;color:#8a573d;font-size:12px;font-weight:bold;cursor:pointer;">根据今日菜单生成</button>
-  </div>
-
-  <div class="card">
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
-      <input id="shoppingManualInput" type="text" placeholder="自己添加，例如：牛奶" style="margin:0;flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();addManualShoppingItem();}">
-      <button type="button" onclick="addManualShoppingItem()" style="flex:0 0 auto;border:0;border-radius:12px;padding:11px 12px;background:#e69765;color:white;font-size:13px;font-weight:bold;cursor:pointer;">＋ 添加</button>
-    </div>
-
-    <div id="shoppingMissingRecipes"></div>
-    <div id="shoppingList"></div>
   </div>
 
 </section>
@@ -1716,8 +1687,6 @@ const SUPABASE_KEY =
 
 
 let foods = [];
-let foodsLoadPromise = null;
-let recipesLoadPromise = null;
 
 let recipes = [];
 
@@ -2135,9 +2104,6 @@ function filterRecipeCategory(category) {
 ===================================================== */
 
 async function loadFoods() {
-  if (foodsLoadPromise) return foodsLoadPromise;
-
-  foodsLoadPromise = (async function() {
 
   if (!siteUnlocked) return;
 
@@ -2239,14 +2205,6 @@ async function loadFoods() {
 
   }
 
-
-  })();
-
-  try {
-    return await foodsLoadPromise;
-  } finally {
-    foodsLoadPromise = null;
-  }
 }
 
 
@@ -3293,9 +3251,6 @@ function renderToday(orders) {
 ===================================================== */
 
 async function loadRecipes() {
-  if (recipesLoadPromise) return recipesLoadPromise;
-
-  recipesLoadPromise = (async function() {
 
   if (!siteUnlocked) return;
 
@@ -3388,14 +3343,6 @@ async function loadRecipes() {
 
   }
 
-
-  })();
-
-  try {
-    return await recipesLoadPromise;
-  } finally {
-    recipesLoadPromise = null;
-  }
 }
 
 
@@ -6389,341 +6336,12 @@ function renderTodayIngredients() {
 }
 
 /* =====================================================
-   🛒 每日购物清单
-   - 购物清单只存在本机 localStorage
-   - 不写入 Supabase
-   - 按「根据今日菜单生成」才读取今日菜单和食谱
-   - 同一天重复生成只补新材料，不重置已完成项目
-   - 隔天自动开始空白清单
-===================================================== */
-
-const SHOPPING_KEY = "liutai_daily_shopping_list_v1";
-const SHOPPING_DATE_KEY = "liutai_daily_shopping_date_v1";
-const SHOPPING_MISSING_KEY = "liutai_daily_shopping_missing_v1";
-
-function shoppingTodayKey() {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Singapore",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit"
-  }).formatToParts(new Date());
-
-  const p = {};
-  parts.forEach(function(x) {
-    if (x.type !== "literal") p[x.type] = x.value;
-  });
-
-  return p.year + "-" + p.month + "-" + p.day;
-}
-
-function ensureShoppingForToday() {
-  const today = shoppingTodayKey();
-  const saved = localStorage.getItem(SHOPPING_DATE_KEY);
-
-  if (saved !== today) {
-    localStorage.setItem(SHOPPING_KEY, "[]");
-    localStorage.setItem(SHOPPING_MISSING_KEY, "[]");
-    localStorage.setItem(SHOPPING_DATE_KEY, today);
-  }
-}
-
-function getShoppingItems() {
-  ensureShoppingForToday();
-  try {
-    const data = JSON.parse(localStorage.getItem(SHOPPING_KEY) || "[]");
-    return Array.isArray(data) ? data : [];
-  } catch (e) {
-    return [];
-  }
-}
-
-function saveShoppingItems(items) {
-  localStorage.setItem(SHOPPING_KEY, JSON.stringify(items));
-  localStorage.setItem(SHOPPING_DATE_KEY, shoppingTodayKey());
-  renderShoppingList();
-}
-
-function shoppingNormalizeName(name) {
-  return String(name || "")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, "");
-}
-
-function shoppingEscapeAttr(value) {
-  return String(value || "")
-    .replace(/&/g, "&amp;")
-    .replace(/'/g, "&#39;")
-    .replace(/"/g, "&quot;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
-
-function renderShoppingList() {
-  ensureShoppingForToday();
-
-  const box = document.getElementById("shoppingList");
-  const missingBox = document.getElementById("shoppingMissingRecipes");
-  if (!box) return;
-
-  const items = getShoppingItems();
-  const active = items.filter(function(x) { return !x.done; });
-  const done = items.filter(function(x) { return !!x.done; });
-
-  let missing = [];
-  try {
-    const parsed = JSON.parse(localStorage.getItem(SHOPPING_MISSING_KEY) || "[]");
-    if (Array.isArray(parsed)) missing = parsed;
-  } catch (e) {}
-
-  if (missingBox) {
-    missingBox.innerHTML = missing.length
-      ? '<div style="background:#fff8e8;color:#8a573d;border-radius:12px;padding:10px 12px;margin-bottom:12px;font-size:12px;line-height:1.6;">⚠️ 尚未建立食谱：' +
-        missing.map(function(name) { return escapeHTML(name); }).join("、") +
-        '</div>'
-      : "";
-  }
-
-  let activeHtml = "";
-  if (active.length) {
-    activeHtml = active.map(function(item) {
-      const id = shoppingEscapeAttr(item.id);
-      return '<div style="display:flex;align-items:center;gap:9px;padding:10px 3px;border-bottom:1px solid #f1e3da;">' +
-        '<input type="checkbox" style="width:18px;height:18px;margin:0;flex:0 0 auto;" onchange="setShoppingDone(\'' + id + '\',true)">' +
-        '<span style="flex:1;font-size:15px;">' + escapeHTML(item.name) + '</span>' +
-        '<button type="button" onclick="deleteShoppingItem(\'' + id + '\')" style="border:0;background:transparent;color:#a96d58;padding:5px;font-size:12px;cursor:pointer;">删除</button>' +
-      '</div>';
-    }).join("");
-  } else {
-    activeHtml = '<div class="empty" style="padding:18px 5px;">今天还没有购物项目 😊<br>可以按「根据今日菜单生成」。</div>';
-  }
-
-  let doneHtml = "";
-  if (done.length) {
-    doneHtml = done.map(function(item) {
-      const id = shoppingEscapeAttr(item.id);
-      return '<div style="display:flex;align-items:center;gap:9px;padding:9px 3px;border-bottom:1px solid #f1e3da;opacity:.65;">' +
-        '<input type="checkbox" checked style="width:18px;height:18px;margin:0;flex:0 0 auto;" onchange="setShoppingDone(\'' + id + '\',false)">' +
-        '<span style="flex:1;font-size:14px;text-decoration:line-through;">' + escapeHTML(item.name) + '</span>' +
-        '<button type="button" onclick="deleteShoppingItem(\'' + id + '\')" style="border:0;background:transparent;color:#a96d58;padding:5px;font-size:12px;cursor:pointer;">删除</button>' +
-      '</div>';
-    }).join("");
-  } else {
-    doneHtml = '<div style="color:#987d70;font-size:13px;padding:8px 3px;">还没有已完成项目</div>';
-  }
-
-  box.innerHTML =
-    '<h3 style="margin:5px 0 7px;">🛍️ 未完成</h3>' +
-    activeHtml +
-    '<h3 style="margin:22px 0 7px;">✅ 已完成</h3>' +
-    doneHtml;
-}
-
-function addManualShoppingItem() {
-  ensureShoppingForToday();
-
-  const input = document.getElementById("shoppingManualInput");
-  const name = input ? input.value.trim() : "";
-  if (!name) return;
-
-  const items = getShoppingItems();
-  const key = shoppingNormalizeName(name);
-
-  if (!items.some(function(x) { return shoppingNormalizeName(x.name) === key; })) {
-    items.push({
-      id: "manual_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8),
-      name: name,
-      done: false,
-      source: "manual"
-    });
-    saveShoppingItems(items);
-  }
-
-  if (input) input.value = "";
-}
-
-function setShoppingDone(id, done) {
-  const items = getShoppingItems();
-  const item = items.find(function(x) { return String(x.id) === String(id); });
-  if (item) item.done = !!done;
-  saveShoppingItems(items);
-}
-
-function deleteShoppingItem(id) {
-  const items = getShoppingItems().filter(function(x) {
-    return String(x.id) !== String(id);
-  });
-  saveShoppingItems(items);
-}
-
-function getShoppingIngredientNames(recipe) {
-  let raw = recipe ? recipe.ingredients : null;
-
-  if (!raw) return [];
-
-  if (typeof raw === "string") {
-    try {
-      raw = JSON.parse(raw);
-    } catch (e) {
-      return [];
-    }
-  }
-
-  if (!Array.isArray(raw)) return [];
-
-  return raw.map(function(item) {
-    if (typeof item === "string") return item.trim();
-    if (item && typeof item === "object") {
-      return String(
-        item.name ||
-        item.ingredient ||
-        item.ingredient_name ||
-        ""
-      ).trim();
-    }
-    return "";
-  }).filter(Boolean);
-}
-
-async function generateShoppingFromTodayMenu(button) {
-  ensureShoppingForToday();
-
-  const oldText = button ? button.textContent : "";
-  if (button) {
-    button.disabled = true;
-    button.textContent = "正在生成…";
-  }
-
-  try {
-    // 直接读取云端最新的今日菜单，所以老公在另一台手机点的菜也能读到。
-    const orderResponse = await supabaseFetch(
-      "/family_orders?select=*&order=created_at.desc",
-      { method: "GET" }
-    );
-    const orderText = await orderResponse.text();
-
-    if (!orderResponse.ok) {
-      throw new Error(orderText || "读取今日菜单失败");
-    }
-
-    const allOrders = orderText ? JSON.parse(orderText) : [];
-    const today = shoppingTodayKey();
-
-    const todayOrders = (Array.isArray(allOrders) ? allOrders : []).filter(function(order) {
-      if (!order.created_at) return false;
-
-      const parts = new Intl.DateTimeFormat("en-CA", {
-        timeZone: "Asia/Singapore",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit"
-      }).formatToParts(new Date(order.created_at));
-
-      const p = {};
-      parts.forEach(function(x) {
-        if (x.type !== "literal") p[x.type] = x.value;
-      });
-
-      return (p.year + "-" + p.month + "-" + p.day) === today;
-    });
-
-    // 读取最新食谱，不依赖页面刚才有没有成功载入过食谱列表。
-    const recipeResponse = await supabaseFetch(
-      "/family_recipes?select=*&order=created_at.desc",
-      { method: "GET" }
-    );
-    const recipeText = await recipeResponse.text();
-
-    if (!recipeResponse.ok) {
-      throw new Error(recipeText || "读取食谱失败");
-    }
-
-    const latestRecipes = recipeText ? JSON.parse(recipeText) : [];
-    const current = getShoppingItems();
-    const existingNames = new Set(
-      current.map(function(x) { return shoppingNormalizeName(x.name); })
-    );
-
-    const missingRecipes = [];
-    const newIngredientNames = [];
-
-    todayOrders.forEach(function(order) {
-      const dishName = String(
-        order.food_name ||
-        order.name ||
-        order.recipe_name ||
-        ""
-      ).trim();
-
-      if (!dishName) return;
-
-      const recipe = (Array.isArray(latestRecipes) ? latestRecipes : []).find(function(r) {
-        return shoppingNormalizeName(r.name) === shoppingNormalizeName(dishName);
-      });
-
-      if (!recipe) {
-        if (!missingRecipes.some(function(x) {
-          return shoppingNormalizeName(x) === shoppingNormalizeName(dishName);
-        })) {
-          missingRecipes.push(dishName);
-        }
-        return;
-      }
-
-      getShoppingIngredientNames(recipe).forEach(function(name) {
-        const key = shoppingNormalizeName(name);
-        if (!key) return;
-
-        if (!newIngredientNames.some(function(x) {
-          return shoppingNormalizeName(x) === key;
-        })) {
-          newIngredientNames.push(name);
-        }
-      });
-    });
-
-    newIngredientNames.forEach(function(name) {
-      const key = shoppingNormalizeName(name);
-
-      // 已完成也算已有，因此再次生成不会把买过的材料重新放回未完成。
-      if (!existingNames.has(key)) {
-        current.push({
-          id: "recipe_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8),
-          name: name,
-          done: false,
-          source: "recipe"
-        });
-        existingNames.add(key);
-      }
-    });
-
-    localStorage.setItem(SHOPPING_MISSING_KEY, JSON.stringify(missingRecipes));
-    saveShoppingItems(current);
-
-    if (!todayOrders.length) {
-      alert("今天还没有点菜 😊");
-    }
-
-  } catch (error) {
-    alert("购物清单生成失败 😢\\n\\n" + (error.message || ""));
-  } finally {
-    if (button) {
-      button.disabled = false;
-      button.textContent = oldText || "根据今日菜单生成";
-    }
-  }
-}
-
-
-/* =====================================================
    页面切换
 ===================================================== */
 
 function showPage(page, button) {
   if (page === "ingredientsToday") syncTodayIngredientsFromSupabase();
   if (page === "today" || page === "foods") syncChefRecommendationsFromSupabase();
-  if (page === "shopping") renderShoppingList();
 
 
   if (!siteUnlocked) {
@@ -6737,7 +6355,6 @@ function showPage(page, button) {
     "addFood",
     "ingredientsToday",
     "today",
-    "shopping",
     "cookbook",
     "addRecipe",
     "backup",
