@@ -1092,66 +1092,37 @@ nav .nav-btn,
 
 
 <style>
-/* 我的食材：顶部、导航、标题固定；只有食材卡片区域滚动 */
-#ingredientsToday{
-  padding-top:0 !important;
-}
+/* 我的食材：重新整理滚动范围。标题/添加食材保持原位，只滚动食材卡片。 */
 #ingredientsToday:not(.hidden){
-  height:calc(100dvh - var(--header-h) - var(--nav-h) - 18px);
-  min-height:220px;
+  height:calc(100dvh - var(--header-h) - var(--nav-h) - 24px);
+  min-height:0;
   overflow:hidden;
   display:flex;
   flex-direction:column;
 }
-#ingredientsToday .ingredient-page-tools{
+#ingredientsToday > div:first-child{
   flex:0 0 auto;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  margin:0 0 10px !important;
-  padding:0 !important;
-  background:#fff8f2;
-}
-#ingredientsToday .ingredient-page-tools::before{content:none !important;display:none !important;}
-#ingredientsToday .ingredient-page-tools h2{
-  margin:0 !important;
-  font-size:22px;
-  line-height:1.25;
-  white-space:nowrap;
-}
-#ingredientsToday .ingredient-page-tools button{
-  flex:0 0 auto;
-  border:0;
-  border-radius:12px;
-  padding:7px 11px;
-  background:#fff0e5;
-  color:#8a573d;
-  font-size:13px;
-  font-weight:bold;
-  cursor:pointer;
 }
 #ingredientsToday #ingredientForm{
   flex:0 0 auto;
-  max-height:calc(100dvh - var(--header-h) - var(--nav-h) - 70px);
-  overflow-y:auto;
 }
 #ingredientsToday #todayIngredientList{
   flex:1 1 auto;
   min-height:0;
   overflow-y:auto;
   overflow-x:hidden;
-  overscroll-behavior:contain;
   -webkit-overflow-scrolling:touch;
-  touch-action:pan-y;
+  overscroll-behavior:contain;
   padding-bottom:24px;
+  scrollbar-width:none;
 }
-/* renderTodayIngredients 内原本的重复标题不显示 */
-#ingredientsToday #todayIngredientList > h3:first-child{display:none !important;}
-/* 关闭旧 CSS 自动生成的标题 */
-#ingredientsToday > div:first-child::before{content:none !important;display:none !important;}
+#ingredientsToday #todayIngredientList::-webkit-scrollbar{display:none;}
+@media (min-width:421px){
+  #ingredientsToday:not(.hidden){
+    height:calc(100dvh - var(--header-h) - var(--nav-h) - 36px);
+  }
+}
 </style>
-
 </head>
 
 <body>
@@ -1312,9 +1283,8 @@ nav .nav-btn,
 
 
 <section id="ingredientsToday" class="hidden">
-  <div class="ingredient-page-tools">
-    <h2>🥬 现有食材</h2>
-    <button type="button" onclick="toggleIngredientForm()">➕ 添加食材</button>
+  <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-bottom:2px;">
+    <button type="button" onclick="toggleIngredientForm()" style="border:0;border-radius:12px;padding:7px 11px;background:#fff0e5;color:#8a573d;font-size:13px;font-weight:bold;cursor:pointer;">➕ 添加食材</button>
   </div>
   
   <div id="ingredientForm" class="card hidden">
