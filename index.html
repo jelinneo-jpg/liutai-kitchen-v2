@@ -1190,7 +1190,7 @@ nav .nav-btn,
 
   <div class="list-sticky-tools">
   <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-    <h2 style="margin-right:auto;display:flex;align-items:baseline;gap:7px;">🍱 刘太菜单 <span id="foodTotalCount" style="font-size:12px;font-weight:500;color:#987d70;white-space:nowrap;"></span></h2>
+    <h2 style="margin-right:auto;">🍱 刘太菜单</h2>
     <button id="chefPickModeButton" type="button" onclick="toggleChefPickMode()" style="flex:0 0 auto;border:0;border-radius:12px;padding:7px 9px;background:#fff0e5;color:#8a573d;font-size:12px;font-weight:bold;cursor:pointer;display:flex;align-items:center;gap:4px;"><img src="chef-recommend-icon.png" alt="" style="width:18px;height:18px;object-fit:contain;object-position:center;display:block;">选推荐菜</button>
     <button type="button" onclick="showPage('addFood', null)" style="flex:0 0 auto;border:0;border-radius:12px;padding:7px 11px;background:#fff0e5;color:#8a573d;font-size:13px;font-weight:bold;cursor:pointer;">➕ 添加食物</button>
   </div>
@@ -1310,7 +1310,7 @@ nav .nav-btn,
 
   <div class="list-sticky-tools">
   <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-    <h2 style="margin-right:auto;display:flex;align-items:baseline;gap:7px;">📖 刘太食谱 <span id="recipeTotalCount" style="font-size:12px;font-weight:500;color:#987d70;white-space:nowrap;"></span></h2>
+    <h2 style="margin-right:auto;">📖 刘太食谱</h2>
     <button type="button" onclick="showPage('addRecipe', null)" style="flex:0 0 auto;border:0;border-radius:12px;padding:7px 11px;background:#fff0e5;color:#8a573d;font-size:13px;font-weight:bold;cursor:pointer;">➕ 添加食谱</button>
   </div>
 
@@ -2170,8 +2170,6 @@ async function loadFoods() {
         ? data
         : [];
 
-    const foodTotalCount = document.getElementById("foodTotalCount");
-    if (foodTotalCount) foodTotalCount.textContent = foods.length + " 项";
 
     renderFoods();
 
@@ -2260,46 +2258,94 @@ function renderFoods(list) {
 let chefPickMode = false;
 let chefPickSelected = new Set();
 const CHEF_PICK_KEY = "liutai_chef_recommendations";
+const CHEF_PICK_DATE_KEY = "liutai_chef_recommendations_date";
+
+function getChefTodayKey() {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Singapore",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(new Date());
+  const map = {};
+  parts.forEach(function(p){ if (p.type !== "literal") map[p.type] = p.value; });
+  return map.year + "-" + map.month + "-" + map.day;
+}
+
+function ensureChefRecommendationsForToday() {
+  const today = getChefTodayKey();
+  const savedDate = localStorage.getItem(CHEF_PICK_DATE_KEY);
+
+  if (savedDate && savedDate !== today) {
+    localStorage.setItem(CHEF_PICK_KEY, "[]");
+  }
+
+  localStorage.setItem(CHEF_PICK_DATE_KEY, today);
+}
 
 const CHEF_PICK_TABLE = "/chef_recommendations";
 let chefRecommendationsSyncReady = false;
 
 async function syncChefRecommendationsFromSupabase() {
+  ensureChefRecommendationsForToday();
+
   try {
-    const response = await supabaseFetch(CHEF_PICK_TABLE + "?select=*&order=created_at.asc", { method:"GET" });
-    const raw = await response.text();
-    if (!response.ok) throw new Error(raw || "读取推荐菜失败");
-    const remote = raw ? JSON.parse(raw) : [];
     const local = getChefRecommendations();
 
-    // 第一次新版：云端为空时，把这台手机原有推荐菜上传，避免资料消失。
-    if (!remote.length && local.length) {
-      const rows = local.map(function(x){
-        return {
-          id:String(x.id),
-          name:x.name || "未命名食物",
-          category:x.category || "其他",
-          created_at:x.created_at || new Date().toISOString()
-        };
-      });
-      const up = await supabaseFetch(CHEF_PICK_TABLE + "?on_conflict=id", {
-        method:"POST",
-        headers:{"Content-Type":"application/json","Prefer":"resolution=merge-duplicates,return=minimal"},
-        body:JSON.stringify(rows)
-      });
-      if (!up.ok) throw new Error(await up.text());
-    } else {
-      const list = remote.map(function(x){
-        return {id:String(x.id), name:x.name || "未命名食物", category:x.category || "其他"};
-      });
-      localStorage.setItem(CHEF_PICK_KEY, JSON.stringify(list));
-      chefPickSelected = new Set(list.map(function(x){ return String(x.id); }));
+    // 同一天已有本机推荐菜：以本机为准，不再让云端空资料覆盖掉。
+    if (local.length) {
+      chefPickSelected = new Set(local.map(function(x){ return String(x.id); }));
+      chefRecommendationsSyncReady = true;
+      renderChefRecommendations();
+      if (chefPickMode) renderFoods();
+      return;
     }
+
+    const response = await supabaseFetch(
+      CHEF_PICK_TABLE + "?select=*&order=created_at.asc",
+      { method:"GET" }
+    );
+    const raw = await response.text();
+    if (!response.ok) throw new Error(raw || "读取推荐菜失败");
+
+    const remote = raw ? JSON.parse(raw) : [];
+
+    // 只恢复今天写入云端的推荐菜；昨天的不会带到今天。
+    const today = getChefTodayKey();
+    const list = remote.filter(function(x){
+      if (!x.created_at) return false;
+      const d = new Date(x.created_at);
+      const parts = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Singapore",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      }).formatToParts(d);
+      const map = {};
+      parts.forEach(function(p){ if (p.type !== "literal") map[p.type] = p.value; });
+      return (map.year + "-" + map.month + "-" + map.day) === today;
+    }).map(function(x){
+      return {
+        id:String(x.id),
+        name:x.name || "未命名食物",
+        category:x.category || "其他"
+      };
+    });
+
+    localStorage.setItem(CHEF_PICK_KEY, JSON.stringify(list));
+    localStorage.setItem(CHEF_PICK_DATE_KEY, today);
+    chefPickSelected = new Set(list.map(function(x){ return String(x.id); }));
     chefRecommendationsSyncReady = true;
     renderChefRecommendations();
     if (chefPickMode) renderFoods();
+
   } catch (e) {
-    console.warn("推荐菜同步失败，暂用本机资料：", e);
+    console.warn("推荐菜同步失败，保留本机今日资料：", e);
+    chefPickSelected = new Set(
+      getChefRecommendations().map(function(x){ return String(x.id); })
+    );
+    renderChefRecommendations();
+    if (chefPickMode) renderFoods();
   }
 }
 
@@ -2344,6 +2390,7 @@ function toggleChefPickMode() {
   if (!chefPickMode) {
     const selectedFoods = foods.filter(f => chefPickSelected.has(String(f.id))).map(f => ({id:String(f.id), name:f.name || "未命名食物", category:f.category || "其他"}));
     localStorage.setItem(CHEF_PICK_KEY, JSON.stringify(selectedFoods));
+    localStorage.setItem(CHEF_PICK_DATE_KEY, getChefTodayKey());
     saveChefRecommendationsToSupabase(selectedFoods);
   }
   renderFoods();
@@ -2409,6 +2456,7 @@ async function addChefRecommendationToToday(id) {
 function removeChefRecommendation(id) {
   const list = getChefRecommendations().filter(function(item){ return String(item.id) !== String(id); });
   localStorage.setItem(CHEF_PICK_KEY, JSON.stringify(list));
+  localStorage.setItem(CHEF_PICK_DATE_KEY, getChefTodayKey());
   saveChefRecommendationsToSupabase(list);
   chefPickSelected = new Set(list.map(function(item){ return String(item.id); }));
   renderChefRecommendations();
@@ -3270,8 +3318,6 @@ async function loadRecipes() {
         ? data
         : [];
 
-    const recipeTotalCount = document.getElementById("recipeTotalCount");
-    if (recipeTotalCount) recipeTotalCount.textContent = recipes.length + " 份";
 
     renderCookbook();
 
