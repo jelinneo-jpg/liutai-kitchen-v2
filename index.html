@@ -1090,6 +1090,36 @@ nav .nav-btn,
 }
 </style>
 
+
+<style>
+/* 我的食材：像菜单一样，上方固定，只滚动食材列表 */
+#ingredientsToday{
+  height: calc(100dvh - var(--header-h) - var(--nav-h) - 18px);
+  min-height: 220px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+#ingredientsToday > div:first-child{
+  flex: 0 0 auto;
+}
+
+#ingredientsToday #ingredientForm{
+  flex: 0 0 auto;
+}
+
+#ingredientsToday #todayIngredientList{
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  padding-bottom: 24px;
+}
+</style>
+
 </head>
 
 <body>
