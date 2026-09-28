@@ -6124,13 +6124,18 @@ async function syncTodayIngredientsFromSupabase() {
         body:JSON.stringify(rows)
       });
       if (!up.ok) throw new Error(await up.text());
+      alert("✅ 我的食材同步成功！\\n已把这台手机的 " + local.length + " 项食材上传到 Supabase。");
     } else {
       saveTodayIngredientsAll(remote.map(ingredientFromSupabaseRow));
+      if (remote.length) {
+        console.log("已从 Supabase 读取 " + remote.length + " 项食材");
+      }
     }
     todayIngredientsSyncReady = true;
     renderTodayIngredients();
   } catch (e) {
     console.warn("我的食材同步失败，暂用本机资料：", e);
+    alert("❌ 我的食材同步失败\\n\\n" + (e && e.message ? e.message : String(e)) + "\\n\\n手机原本的食材资料没有删除。请把这个提示截图给我。");
   }
 }
 
