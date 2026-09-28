@@ -6217,20 +6217,48 @@ function restoreIngredient(id) {
 function editTodayIngredient(id) {
   const all=getTodayIngredientsAll().map(normalizeIngredient);
   const x=all.find(v=>String(v.id)===String(id)); if(!x)return;
-  const name=prompt("编辑食材名称：", x.name); if(name===null)return;
-  const cleanName=name.trim(); if(!cleanName){alert("食材名称不能为空 ❤️");return;}
-  const qtyRaw=prompt(`编辑剩余数量（${x.unit}）：`, fmtQty(x.qty)); if(qtyRaw===null)return;
-  const qty=Number(qtyRaw); if(!(qty>=0)){alert("请输入正确的数量 ❤️");return;}
-  x.name=cleanName; x.qty=qty;
-  if(qty===0){x.status="done";x.finishedAt=new Date().toISOString();}else{x.status="active";delete x.finishedAt;}
-  saveTodayIngredientsAll(all); renderTodayIngredients();
+  const old=document.getElementById("ingredientEditOverlay"); if(old) old.remove();
+
+  const overlay=document.createElement("div");
+  overlay.id="ingredientEditOverlay";
+  overlay.style.cssText="position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.30);display:flex;align-items:center;justify-content:center;padding:18px;";
+  overlay.innerHTML=`
+    <div style="width:min(100%,420px);background:#fff;border-radius:22px;padding:20px;box-shadow:0 12px 35px rgba(0,0,0,.20);">
+      <h3 style="margin:0 0 16px;font-size:20px;">✏️ 编辑食材</h3>
+      <label style="display:block;font-weight:bold;">食材名称</label>
+      <input id="editIngredientName" value="${escapeHTML(x.name)}">
+      <label style="display:block;font-weight:bold;">剩余数量</label>
+      <input id="editIngredientQty" type="number" min="0" step="any" inputmode="decimal" value="${fmtQty(x.qty)}">
+      <label style="display:block;font-weight:bold;">单位</label>
+      <select id="editIngredientUnit">
+        ${["条","粒","只","包","盒","瓶","个","片","g","kg","ml","L"].map(u=>`<option value="${u}" ${x.unit===u?"selected":""}>${u}</option>`).join("")}
+      </select>
+      <label style="display:flex;align-items:center;gap:9px;margin:7px 0 18px;font-weight:bold;cursor:pointer;">
+        <input id="editIngredientExpiring" type="checkbox" ${x.expiring?"checked":""} style="width:20px;height:20px;margin:0;">
+        <span>⚠️ 快过期</span>
+      </label>
+      <div style="display:flex;gap:8px;">
+        <button type="button" onclick="document.getElementById('ingredientEditOverlay').remove()" style="flex:1;border:0;background:#eee;color:#8a4d3b;padding:12px;border-radius:14px;font-weight:bold;">取消</button>
+        <button type="button" onclick="saveIngredientEdit('${x.id}')" style="flex:1;border:0;background:#e69765;color:white;padding:12px;border-radius:14px;font-weight:bold;">保存</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
 }
 
-function toggleIngredientExpiring(id, checked) {
+function saveIngredientEdit(id) {
   const all=getTodayIngredientsAll().map(normalizeIngredient);
   const x=all.find(v=>String(v.id)===String(id)); if(!x)return;
-  x.expiring=!!checked;
+  const name=document.getElementById("editIngredientName").value.trim();
+  const qty=Number(document.getElementById("editIngredientQty").value);
+  if(!name){alert("食材名称不能为空 ❤️");return;}
+  if(!(qty>=0)){alert("请输入正确的数量 ❤️");return;}
+  x.name=name;
+  x.qty=qty;
+  x.unit=document.getElementById("editIngredientUnit").value;
+  x.expiring=document.getElementById("editIngredientExpiring").checked;
+  if(qty===0){x.status="done";x.finishedAt=new Date().toISOString();}else{x.status="active";delete x.finishedAt;}
   saveTodayIngredientsAll(all);
+  document.getElementById("ingredientEditOverlay").remove();
   renderTodayIngredients();
 }
 function toggleIngredientSettings(id) {
@@ -6255,7 +6283,7 @@ function renderTodayIngredients() {
   const done=all.filter(x=>x.status==="done"||x.qty<=0).sort((a,b)=>String(b.finishedAt||"").localeCompare(String(a.finishedAt||"")));
   const icons={"肉类":"🥩","鱼/海鲜":"🐟","蔬菜":"🥬","蛋/豆腐":"🥚","其他":"🍄"};
   const gear=(x)=>`<div style="position:relative;flex:0 0 auto;display:inline-flex;align-items:center;"><button type="button" onclick="toggleIngredientSettings('${x.id}')" aria-label="设置" style="border:0;background:#f6f1ed;color:#8a573d;width:27px;height:27px;border-radius:8px;font-size:14px;cursor:pointer;padding:0;">⚙️</button><div id="ingredientSettings-${x.id}" class="ingredient-settings-menu hidden" style="position:absolute;right:0;top:31px;z-index:20;background:white;border:1px solid #ead8cc;border-radius:12px;box-shadow:0 5px 18px rgba(0,0,0,.12);padding:5px;min-width:105px;"><button type="button" onclick="editTodayIngredient('${x.id}')" style="display:block;width:100%;border:0;background:white;padding:8px 9px;text-align:left;color:#6f5549;border-radius:8px;white-space:nowrap;">✏️ 编辑</button><button type="button" onclick="deleteTodayIngredient('${x.id}')" style="display:block;width:100%;border:0;background:white;padding:8px 9px;text-align:left;color:#a65343;border-radius:8px;white-space:nowrap;">🗑️ 删除</button></div></div>`;
-  const activeHtml=active.length?active.map(x=>`<div class="compact-card"><div style="display:flex;align-items:center;gap:10px;"><div class="compact-icon-box">${icons[x.type]||"🍄"}</div><div style="flex:1;min-width:0;"><div style="font-weight:bold;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHTML(x.name)}</div><div style="display:flex;align-items:center;gap:4px;margin-top:6px;white-space:nowrap;"><span style="font-size:12px;color:#8a573d;flex:1;min-width:0;">剩余：<b>${fmtQty(x.qty)} ${escapeHTML(x.unit)}</b> <label style="display:inline-flex;align-items:center;gap:2px;margin:0 0 0 4px;cursor:pointer;vertical-align:middle;"><input type="checkbox" ${x.expiring?'checked':''} onchange="toggleIngredientExpiring('${x.id}', this.checked)" style="width:auto;margin:0;accent-color:#e69765;">⚠️</label></span><button type="button" onclick="useIngredient('${x.id}')" style="border:0;border-radius:9px;padding:6px 7px;background:#e69765;color:white;font-size:12px;font-weight:bold;cursor:pointer;">－用了</button><button type="button" onclick="restockIngredient('${x.id}')" style="border:0;border-radius:9px;padding:6px 7px;background:#fff0e5;color:#8a573d;font-size:12px;font-weight:bold;cursor:pointer;">＋补货</button>${gear(x)}</div></div></div></div>`).join(""):'<div class="empty">现在没有食材 😊<br>可以点击「➕ 添加食材」加入。</div>';
+  const activeHtml=active.length?active.map(x=>`<div class="compact-card"><div style="display:flex;align-items:center;gap:10px;"><div class="compact-icon-box">${icons[x.type]||"🍄"}</div><div style="flex:1;min-width:0;"><div style="font-weight:bold;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHTML(x.name)}</div><div style="display:flex;align-items:center;gap:4px;margin-top:6px;white-space:nowrap;"><span style="font-size:12px;color:#8a573d;flex:1;min-width:0;">剩余：<b>${fmtQty(x.qty)} ${escapeHTML(x.unit)}</b>${x.expiring?' ⚠️':''}</span><button type="button" onclick="useIngredient('${x.id}')" style="border:0;border-radius:9px;padding:6px 7px;background:#e69765;color:white;font-size:12px;font-weight:bold;cursor:pointer;">－用了</button><button type="button" onclick="restockIngredient('${x.id}')" style="border:0;border-radius:9px;padding:6px 7px;background:#fff0e5;color:#8a573d;font-size:12px;font-weight:bold;cursor:pointer;">＋补货</button>${gear(x)}</div></div></div></div>`).join(""):'<div class="empty">现在没有食材 😊<br>可以点击「➕ 添加食材」加入。</div>';
   const doneHtml=done.length?done.map(x=>`<div class="compact-card" style="opacity:.72;"><div style="display:flex;align-items:center;gap:10px;"><div class="compact-icon-box">${icons[x.type]||"🍄"}</div><div style="flex:1;min-width:0;"><div style="font-weight:bold;font-size:15px;text-decoration:line-through;">${escapeHTML(x.name)}</div><div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:5px;"><span style="font-size:12px;color:#987d70;">已用完</span><button type="button" onclick="restoreIngredient('${x.id}')" style="border:0;border-radius:9px;padding:6px 8px;background:#fff0e5;color:#8a573d;font-size:12px;font-weight:bold;cursor:pointer;">↩️ 恢复</button></div></div>${gear(x)}</div></div>`).join(""):'<div style="color:#987d70;font-size:13px;padding:8px 2px 18px;">还没有已用完的食材</div>';
   box.innerHTML=`<h3 style="margin:12px 0 10px;">🥬 现有食材</h3>${activeHtml}<h3 style="margin:22px 0 10px;">✅ 已用完</h3>${doneHtml}`;
 }
