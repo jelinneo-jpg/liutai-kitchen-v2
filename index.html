@@ -1120,6 +1120,30 @@ nav .nav-btn,
 }
 </style>
 
+
+<style>
+/* 修正：现有食材标题固定后，第一张食材卡不要被标题盖住 */
+#ingredientsToday > div:first-child{
+  position: relative;
+  z-index: 2;
+  background: #fff8f2;
+  margin-bottom: 10px !important;
+}
+
+#ingredientsToday #todayIngredientList{
+  position: relative;
+  z-index: 1;
+  padding-top: 2px;
+}
+
+/* 列表内部原本重复的「现有食材」标题不占空间 */
+#ingredientsToday #todayIngredientList > h3:first-child{
+  display: none !important;
+  margin: 0 !important;
+  height: 0 !important;
+}
+</style>
+
 </head>
 
 <body>
