@@ -1090,38 +1090,14 @@ nav .nav-btn,
 }
 </style>
 
-
 <style>
-/* 我的食材：重新整理滚动范围。标题/添加食材保持原位，只滚动食材卡片。 */
-#ingredientsToday:not(.hidden){
-  height:calc(100dvh - var(--header-h) - var(--nav-h) - 24px);
-  min-height:0;
-  overflow:hidden;
-  display:flex;
-  flex-direction:column;
-}
-#ingredientsToday > div:first-child{
-  flex:0 0 auto;
-}
-#ingredientsToday #ingredientForm{
-  flex:0 0 auto;
-}
-#ingredientsToday #todayIngredientList{
-  flex:1 1 auto;
-  min-height:0;
-  overflow-y:auto;
-  overflow-x:hidden;
-  -webkit-overflow-scrolling:touch;
-  overscroll-behavior:contain;
-  padding-bottom:24px;
-  scrollbar-width:none;
-}
-#ingredientsToday #todayIngredientList::-webkit-scrollbar{display:none;}
-@media (min-width:421px){
-  #ingredientsToday:not(.hidden){
-    height:calc(100dvh - var(--header-h) - var(--nav-h) - 36px);
-  }
-}
+
+#ingredientsToday{height:calc(100dvh - var(--header-h) - var(--nav-h) - 12px);min-height:220px;overflow:hidden!important;display:flex;flex-direction:column}
+#ingredientsToday>div:first-child{flex:0 0 auto}
+#ingredientsToday #ingredientForm{flex:0 0 auto}
+#ingredientsToday #todayIngredientList{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;padding-bottom:24px;scrollbar-width:none}
+#ingredientsToday #todayIngredientList::-webkit-scrollbar{display:none}
+
 </style>
 </head>
 
