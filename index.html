@@ -1628,6 +1628,10 @@ function unlockKitchen() {
 
     loadTodayOrders();
 
+    syncChefRecommendationsFromSupabase();
+
+    syncTodayIngredientsFromSupabase();
+
   }
 
   else {
@@ -2255,6 +2259,70 @@ let chefPickMode = false;
 let chefPickSelected = new Set();
 const CHEF_PICK_KEY = "liutai_chef_recommendations";
 
+const CHEF_PICK_TABLE = "/chef_recommendations";
+let chefRecommendationsSyncReady = false;
+
+async function syncChefRecommendationsFromSupabase() {
+  try {
+    const response = await supabaseFetch(CHEF_PICK_TABLE + "?select=*&order=created_at.asc", { method:"GET" });
+    const raw = await response.text();
+    if (!response.ok) throw new Error(raw || "读取推荐菜失败");
+    const remote = raw ? JSON.parse(raw) : [];
+    const local = getChefRecommendations();
+
+    // 第一次新版：云端为空时，把这台手机原有推荐菜上传，避免资料消失。
+    if (!remote.length && local.length) {
+      const rows = local.map(function(x){
+        return {
+          id:String(x.id),
+          name:x.name || "未命名食物",
+          category:x.category || "其他",
+          created_at:x.created_at || new Date().toISOString()
+        };
+      });
+      const up = await supabaseFetch(CHEF_PICK_TABLE + "?on_conflict=id", {
+        method:"POST",
+        headers:{"Content-Type":"application/json","Prefer":"resolution=merge-duplicates,return=minimal"},
+        body:JSON.stringify(rows)
+      });
+      if (!up.ok) throw new Error(await up.text());
+    } else {
+      const list = remote.map(function(x){
+        return {id:String(x.id), name:x.name || "未命名食物", category:x.category || "其他"};
+      });
+      localStorage.setItem(CHEF_PICK_KEY, JSON.stringify(list));
+      chefPickSelected = new Set(list.map(function(x){ return String(x.id); }));
+    }
+    chefRecommendationsSyncReady = true;
+    renderChefRecommendations();
+    if (chefPickMode) renderFoods();
+  } catch (e) {
+    console.warn("推荐菜同步失败，暂用本机资料：", e);
+  }
+}
+
+async function saveChefRecommendationsToSupabase(list) {
+  try {
+    // 推荐菜数量很少：以当前选择为准，整表同步最稳定。
+    const del = await supabaseFetch(CHEF_PICK_TABLE + "?id=not.is.null", {method:"DELETE"});
+    if (!del.ok) throw new Error(await del.text());
+    if (list.length) {
+      const rows = list.map(function(x){
+        return {id:String(x.id), name:x.name || "未命名食物", category:x.category || "其他", created_at:new Date().toISOString()};
+      });
+      const up = await supabaseFetch(CHEF_PICK_TABLE, {
+        method:"POST",
+        headers:{"Content-Type":"application/json","Prefer":"return=minimal"},
+        body:JSON.stringify(rows)
+      });
+      if (!up.ok) throw new Error(await up.text());
+    }
+  } catch (e) {
+    console.warn("推荐菜上传失败：", e);
+  }
+}
+
+
 function getChefRecommendations() {
   try { return JSON.parse(localStorage.getItem(CHEF_PICK_KEY) || "[]"); }
   catch(e) { return []; }
@@ -2274,6 +2342,7 @@ function toggleChefPickMode() {
   if (!chefPickMode) {
     const selectedFoods = foods.filter(f => chefPickSelected.has(String(f.id))).map(f => ({id:String(f.id), name:f.name || "未命名食物", category:f.category || "其他"}));
     localStorage.setItem(CHEF_PICK_KEY, JSON.stringify(selectedFoods));
+    saveChefRecommendationsToSupabase(selectedFoods);
   }
   renderFoods();
 }
@@ -2338,6 +2407,7 @@ async function addChefRecommendationToToday(id) {
 function removeChefRecommendation(id) {
   const list = getChefRecommendations().filter(function(item){ return String(item.id) !== String(id); });
   localStorage.setItem(CHEF_PICK_KEY, JSON.stringify(list));
+  saveChefRecommendationsToSupabase(list);
   chefPickSelected = new Set(list.map(function(item){ return String(item.id); }));
   renderChefRecommendations();
   if (chefPickMode) renderFoods();
@@ -6005,11 +6075,93 @@ async function importKitchenData(input) {
 ===================================================== */
 const TODAY_INGREDIENTS_KEY = "liutai_kitchen_today_ingredients";
 
+const TODAY_INGREDIENTS_TABLE = "/kitchen_ingredients";
+let todayIngredientsSyncReady = false;
+
+function ingredientToSupabaseRow(x) {
+  x = normalizeIngredient(Object.assign({}, x));
+  return {
+    id:String(x.id),
+    name:x.name || "",
+    type:x.type || "其他",
+    qty:Number(x.qty) || 0,
+    unit:x.unit || "份",
+    expiring:!!x.expiring,
+    status:x.status || ((Number(x.qty)||0) <= 0 ? "done" : "active"),
+    created_at:x.createdAt || x.created_at || new Date().toISOString(),
+    finished_at:x.finishedAt || x.finished_at || null
+  };
+}
+
+function ingredientFromSupabaseRow(x) {
+  return normalizeIngredient({
+    id:String(x.id),
+    name:x.name || "",
+    type:x.type || "其他",
+    qty:Number(x.qty) || 0,
+    unit:x.unit || "份",
+    expiring:!!x.expiring,
+    status:x.status || "active",
+    createdAt:x.created_at || new Date().toISOString(),
+    finishedAt:x.finished_at || undefined
+  });
+}
+
+async function syncTodayIngredientsFromSupabase() {
+  try {
+    const response = await supabaseFetch(TODAY_INGREDIENTS_TABLE + "?select=*&order=created_at.asc", {method:"GET"});
+    const raw = await response.text();
+    if (!response.ok) throw new Error(raw || "读取食材失败");
+    const remote = raw ? JSON.parse(raw) : [];
+    const local = getTodayIngredientsAll().map(normalizeIngredient);
+
+    // 第一次新版：云端为空时，先上传这台手机现有食材。
+    if (!remote.length && local.length) {
+      const rows = local.map(ingredientToSupabaseRow);
+      const up = await supabaseFetch(TODAY_INGREDIENTS_TABLE + "?on_conflict=id", {
+        method:"POST",
+        headers:{"Content-Type":"application/json","Prefer":"resolution=merge-duplicates,return=minimal"},
+        body:JSON.stringify(rows)
+      });
+      if (!up.ok) throw new Error(await up.text());
+    } else {
+      saveTodayIngredientsAll(remote.map(ingredientFromSupabaseRow));
+    }
+    todayIngredientsSyncReady = true;
+    renderTodayIngredients();
+  } catch (e) {
+    console.warn("我的食材同步失败，暂用本机资料：", e);
+  }
+}
+
+async function saveTodayIngredientsToSupabase(list) {
+  try {
+    // 以目前手机画面这份库存为准同步到云端。
+    const del = await supabaseFetch(TODAY_INGREDIENTS_TABLE + "?id=not.is.null", {method:"DELETE"});
+    if (!del.ok) throw new Error(await del.text());
+    if (list.length) {
+      const rows = list.map(ingredientToSupabaseRow);
+      const up = await supabaseFetch(TODAY_INGREDIENTS_TABLE, {
+        method:"POST",
+        headers:{"Content-Type":"application/json","Prefer":"return=minimal"},
+        body:JSON.stringify(rows)
+      });
+      if (!up.ok) throw new Error(await up.text());
+    }
+  } catch (e) {
+    console.warn("我的食材上传失败：", e);
+  }
+}
+
+
 function getTodayIngredientsAll() {
   try { return JSON.parse(localStorage.getItem(TODAY_INGREDIENTS_KEY) || "[]"); }
   catch(e) { return []; }
 }
-function saveTodayIngredientsAll(list) { localStorage.setItem(TODAY_INGREDIENTS_KEY, JSON.stringify(list)); }
+function saveTodayIngredientsAll(list) {
+  localStorage.setItem(TODAY_INGREDIENTS_KEY, JSON.stringify(list));
+  if (todayIngredientsSyncReady) saveTodayIngredientsToSupabase(list);
+}
 function toggleIngredientForm(force) {
   const box = document.getElementById("ingredientForm"); if (!box) return;
   const show = typeof force === "boolean" ? force : box.classList.contains("hidden");
@@ -6093,6 +6245,9 @@ function renderTodayIngredients() {
 ===================================================== */
 
 function showPage(page, button) {
+  if (page === "ingredientsToday") syncTodayIngredientsFromSupabase();
+  if (page === "today" || page === "foods") syncChefRecommendationsFromSupabase();
+
 
   if (!siteUnlocked) {
     return;
