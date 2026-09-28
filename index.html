@@ -1144,6 +1144,58 @@ nav .nav-btn,
 }
 </style>
 
+
+<style>
+/* 修正「现有食材」标题上下被裁掉：给固定标题列完整高度与空间 */
+#ingredientsToday > div:first-child{
+  min-height: 58px !important;
+  height: auto !important;
+  margin-top: 0 !important;
+  margin-bottom: 6px !important;
+  padding: 8px 0 6px !important;
+  align-items: center !important;
+  overflow: visible !important;
+  line-height: 1.25 !important;
+}
+
+#ingredientsToday > div:first-child::before{
+  display: block !important;
+  line-height: 1.25 !important;
+  padding: 2px 0 !important;
+  overflow: visible !important;
+}
+</style>
+
+
+<style>
+/* 我的食材标题区：直接参考「刘太菜单」list-sticky-tools 的尺寸/间距 */
+#ingredientsToday > div:first-child{
+  min-height: 0 !important;
+  height: auto !important;
+  margin: -8px 0 8px !important;
+  padding: 0 0 1px !important;
+  align-items: center !important;
+  overflow: visible !important;
+  background: #fff8f2 !important;
+}
+
+#ingredientsToday > div:first-child::before{
+  content:"🥬 现有食材";
+  display:block !important;
+  font-size:22px !important;
+  font-weight:700 !important;
+  line-height:1.2 !important;
+  margin:0 !important;
+  padding:0 !important;
+  color:#3d2b24 !important;
+  white-space:nowrap;
+}
+
+#ingredientsToday > div:first-child > button{
+  flex:0 0 auto;
+}
+</style>
+
 </head>
 
 <body>
