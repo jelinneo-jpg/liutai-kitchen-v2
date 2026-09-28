@@ -6124,7 +6124,7 @@ async function syncTodayIngredientsFromSupabase() {
         body:JSON.stringify(rows)
       });
       if (!up.ok) throw new Error(await up.text());
-      alert("✅ 我的食材同步成功！\\n已把这台手机的 " + local.length + " 项食材上传到 Supabase。");
+      console.log("我的食材已成功上传到 Supabase：" + local.length + " 项");
     } else {
       saveTodayIngredientsAll(remote.map(ingredientFromSupabaseRow));
       if (remote.length) {
@@ -6223,6 +6223,7 @@ function editTodayIngredient(id) {
   const qty=Number(qtyRaw); if(!(qty>=0)){alert("请输入正确的数量 ❤️");return;}
   x.name=cleanName; x.qty=qty;
   if(qty===0){x.status="done";x.finishedAt=new Date().toISOString();}else{x.status="active";delete x.finishedAt;}
+  x.expiring = confirm("⚠️ 这个食材是否快过期？\n\n按「确定」＝快过期\n按「取消」＝不过期");
   saveTodayIngredientsAll(all); renderTodayIngredients();
 }
 function toggleIngredientSettings(id) {
