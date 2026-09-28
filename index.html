@@ -1212,7 +1212,7 @@ body.ingredient-scroll-lock{
 
   <div class="list-sticky-tools">
   <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-    <h2 style="margin-right:auto;">🍱 刘太菜单</h2>
+    <h2 style="margin-right:auto;">🍱 刘太菜单 <span id="foodTotalCount" style="font-size:11px;font-weight:normal;color:#a58b7e;white-space:nowrap;"></span></h2>
     <button id="chefPickModeButton" type="button" onclick="toggleChefPickMode()" style="flex:0 0 auto;border:0;border-radius:12px;padding:7px 9px;background:#fff0e5;color:#8a573d;font-size:12px;font-weight:bold;cursor:pointer;display:flex;align-items:center;gap:4px;"><img src="chef-recommend-icon.png" alt="" style="width:18px;height:18px;object-fit:contain;object-position:center;display:block;">选推荐菜</button>
     <button type="button" onclick="showPage('addFood', null)" style="flex:0 0 auto;border:0;border-radius:12px;padding:7px 11px;background:#fff0e5;color:#8a573d;font-size:13px;font-weight:bold;cursor:pointer;">➕ 添加食物</button>
   </div>
@@ -1332,7 +1332,7 @@ body.ingredient-scroll-lock{
 
   <div class="list-sticky-tools">
   <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-    <h2 style="margin-right:auto;">📖 刘太食谱</h2>
+    <h2 style="margin-right:auto;">📖 刘太食谱 <span id="recipeTotalCount" style="font-size:11px;font-weight:normal;color:#a58b7e;white-space:nowrap;"></span></h2>
     <button type="button" onclick="showPage('addRecipe', null)" style="flex:0 0 auto;border:0;border-radius:12px;padding:7px 11px;background:#fff0e5;color:#8a573d;font-size:13px;font-weight:bold;cursor:pointer;">➕ 添加食谱</button>
   </div>
 
@@ -2235,6 +2235,8 @@ async function loadFoods() {
 ===================================================== */
 
 function renderFoods(list) {
+  const foodTotalCount = document.getElementById("foodTotalCount");
+  if (foodTotalCount) foodTotalCount.textContent = "· " + (Array.isArray(foods) ? foods.length : 0) + "个";
 
   const box =
     document.getElementById(
@@ -3393,6 +3395,8 @@ async function loadRecipes() {
 ===================================================== */
 
 function renderCookbook(list) {
+  const recipeTotalCount = document.getElementById("recipeTotalCount");
+  if (recipeTotalCount) recipeTotalCount.textContent = "· " + (Array.isArray(recipes) ? recipes.length : 0) + "个";
 
   const box =
     document.getElementById(
