@@ -2992,6 +2992,23 @@ async function orderFood(id, person) {
 
 
 /* =====================================================
+   与「我的记录本」共用的本机资料（不写入 Supabase）
+===================================================== */
+const RECORD_BOOK_TODAY_KEY = "liutai_kitchen_today_orders_v1";
+const RECORD_BOOK_RECIPES_KEY = "liutai_kitchen_recipes_v1";
+
+function saveKitchenBridge(key, data) {
+  try {
+    localStorage.setItem(key, JSON.stringify({
+      updated_at: new Date().toISOString(),
+      data: Array.isArray(data) ? data : []
+    }));
+  } catch (e) {
+    console.warn("记录本共用资料保存失败", e);
+  }
+}
+
+/* =====================================================
    今日菜单
 ===================================================== */
 
@@ -3162,6 +3179,8 @@ async function loadTodayOrders() {
       );
 
 
+    saveKitchenBridge(RECORD_BOOK_TODAY_KEY, todayOrders);
+
     renderToday(
       todayOrders
     );
@@ -3318,6 +3337,8 @@ async function loadRecipes() {
         ? data
         : [];
 
+
+    saveKitchenBridge(RECORD_BOOK_RECIPES_KEY, recipes);
 
     renderCookbook();
 
