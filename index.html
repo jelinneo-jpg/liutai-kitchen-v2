@@ -4927,13 +4927,15 @@ function renderRecipeDetail() {
         ${icon}
       </div>
 
-      <div class="recipe-title">
+      <label class="form-label">
+        食谱名字
+      </label>
 
-        ${escapeHTML(
-          currentRecipe.name
-        )}
-
-      </div>
+      <input
+        id="editRecipeName"
+        type="text"
+        value="${escapeHTML(currentRecipe.name || "")}"
+        placeholder="请输入食谱名字">
 
       <label class="form-label">
         分类
@@ -5417,6 +5419,25 @@ async function saveRecipeDetail() {
       : "";
 
 
+  const recipeNameInput =
+    document.getElementById(
+      "editRecipeName"
+    );
+
+
+  const recipeName =
+    recipeNameInput
+      ? recipeNameInput.value.trim()
+      : String(currentRecipe.name || "").trim();
+
+
+  if (!recipeName) {
+    alert("请输入食谱名字 ❤️");
+    if (recipeNameInput) recipeNameInput.focus();
+    return;
+  }
+
+
   const recipeCategorySelect =
     document.getElementById(
       "editRecipeCategory"
@@ -5454,6 +5475,9 @@ async function saveRecipeDetail() {
           },
 
           body: JSON.stringify({
+
+            name:
+              recipeName,
 
             ingredients:
               JSON.stringify(
