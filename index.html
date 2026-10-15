@@ -6492,7 +6492,7 @@ function renderTodayIngredients() {
   const doneHtml=done.length?done.map(x=>`<div class="compact-card" style="opacity:.72;"><div style="display:flex;align-items:center;gap:10px;">${ingredientPickCircle(x)}<div class="compact-icon-box">${icons[x.type]||"🍄"}</div><div style="flex:1;min-width:0;"><div style="font-weight:bold;font-size:15px;text-decoration:line-through;">${escapeHTML(x.name)}</div><div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:5px;"><span style="font-size:12px;color:#987d70;">已用完</span><button type="button" onclick="restoreIngredient('${x.id}')" style="border:0;border-radius:9px;padding:6px 8px;background:#fff0e5;color:#8a573d;font-size:12px;font-weight:bold;cursor:pointer;">↩️ 恢复</button></div></div>${gear(x)}</div></div>`).join(""):'<div style="color:#987d70;font-size:13px;padding:8px 2px 18px;">还没有已用完的食材</div>';
   const pickButton=document.getElementById("ingredientPickButton");
   if(pickButton) pickButton.textContent=ingredientPickMode?(ingredientPickSelected.size?`下一步 (${ingredientPickSelected.size})`:"取消选择"):"📤 发送已选";
-  box.innerHTML=`<h3 style="margin:12px 0 10px;">🥬 现有食材</h3>${activeHtml}<h3 style="margin:22px 0 10px;">✅ 已用完</h3>${doneHtml}`;
+  box.innerHTML=`${activeHtml}<h3 style="margin:22px 0 10px;">✅ 已用完</h3>${doneHtml}`;
 }
 
 /* =====================================================
