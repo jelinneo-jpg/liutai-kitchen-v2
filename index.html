@@ -6803,6 +6803,7 @@ function sendIngredientToNotes(id){
  }
  const url=new URL(base);
  url.searchParams.set('kitchen_add',item.name);
+ url.searchParams.set('kitchen_section','pantry');
  url.searchParams.set('kitchen_ref',String(item.id));
  window.location.href=url.toString();
 }
