@@ -1025,10 +1025,7 @@ nav .nav-btn,
 #ingredientsToday{
   padding-top:0 !important;
 }
-#ingredientsToday > div:first-child{
-  margin-top:-8px !important;
-  margin-bottom:-22px !important;
-}
+
 </style>
 
 
@@ -1064,21 +1061,28 @@ nav .nav-btn,
 
 
 <style>
-/* 我的食材：现有食材与添加食材同一排 */
-#ingredientsToday > div:first-child{
-  margin-top:-8px !important;
-  margin-bottom:10px !important;
-  justify-content:space-between !important;
+/* 我的食材：标题左侧，两个按钮紧靠右侧 */
+#ingredientsToday > .pantry-toolbar{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:8px;margin-top:-8px;margin-bottom:10px;
 }
-#ingredientsToday > div:first-child::before{
-  content:"🥬 现有食材";
-  font-size:22px;
-  line-height:1.2;
-  font-weight:700;
-  color:#3d2b24;
+#ingredientsToday > .pantry-toolbar h2{
+  margin:0;font-size:22px;line-height:1.2;white-space:nowrap;
 }
-#ingredientsToday #todayIngredientList > h3:first-child{
-  display:none !important;
+#ingredientsToday .pantry-toolbar-actions{
+  display:flex;align-items:center;justify-content:flex-end;
+  gap:5px;flex:0 0 auto;
+}
+#ingredientsToday .pantry-toolbar-actions button{
+  border:0;border-radius:12px;padding:7px 8px;
+  font-size:12px;font-weight:bold;cursor:pointer;white-space:nowrap;
+}
+#ingredientsToday .pantry-add-button{background:#fff0e5;color:#8a573d;}
+#ingredientsToday .pantry-send-button{background:#e2eee1;color:#426342;}
+@media(max-width:390px){
+  #ingredientsToday > .pantry-toolbar h2{font-size:19px;}
+  #ingredientsToday .pantry-toolbar-actions{gap:4px;}
+  #ingredientsToday .pantry-toolbar-actions button{font-size:11px;padding:7px 6px;}
 }
 </style>
 
@@ -1272,11 +1276,14 @@ body.ingredient-scroll-lock{
 
 
 <section id="ingredientsToday" class="hidden">
-  <div style="display:flex;align-items:center;justify-content:flex-end;gap:4px;margin-bottom:2px;">
-    <button type="button" onclick="toggleIngredientForm()" style="border:0;border-radius:12px;padding:7px 11px;background:#fff0e5;color:#8a573d;font-size:13px;font-weight:bold;cursor:pointer;">➕ 添加食材</button>
-    <button id="ingredientPickButton" type="button" onclick="toggleIngredientPickMode()" style="border:0;border-radius:12px;padding:7px 9px;background:#e2eee1;color:#426342;font-size:12px;font-weight:bold;cursor:pointer;">📤 发送已选</button>
+  <div class="pantry-toolbar">
+    <h2>🥬 现有食材</h2>
+    <div class="pantry-toolbar-actions">
+      <button type="button" onclick="toggleIngredientForm()" class="pantry-add-button">➕ 添加食材</button>
+      <button id="ingredientPickButton" type="button" onclick="toggleIngredientPickMode()" class="pantry-send-button">📤 发送已选</button>
+    </div>
   </div>
-  
+
   <div id="ingredientForm" class="card hidden">
     <label>食材名称</label><input id="ingredientName" placeholder="例如：鸡腿肉">
     <label>分类</label>
